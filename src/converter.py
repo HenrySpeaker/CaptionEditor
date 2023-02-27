@@ -3,7 +3,7 @@ import argparse
 from pathlib import Path
 
 
-class Converter:
+class WebVTTConverter:
     def __init__(self, captions, conversions_file="conversions.txt", dest_filename=""):
         # set captions path
         self.update_captions_path(captions)
@@ -114,4 +114,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     print(args.caption_filename, args.c, args.d)
-    converter = Converter(args.caption_filename, args.c)
+    converter = WebVTTConverter(args.caption_filename, args.c)
