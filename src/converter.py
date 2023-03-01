@@ -1,66 +1,92 @@
 import webvtt
 import argparse
 from pathlib import Path
+import json
 
 
 class WebVTTConverter:
-    def __init__(self, captions, conversions_file="conversions.txt", dest_filename=""):
-        # set captions path
-        self.update_captions_path(captions)
+    def __init__(
+        self,
+        captions_file,
+        conversions_file="conversions.json",
+        dest_filename="",
+        offset=0,
+    ):
+        self.captions_file_path = None
+        self.conversions_file = None
+        self.new_captions_path = None
 
-        # set conversions path and store them
-        self.update_conversions(conversions_file)
+        # set captions path
+        self.update_captions_path(captions_file)
 
         # update or create file path for converted captions
         self.update_dest_captions_file(dest_filename)
 
-        self.timing_offset = 0
+        self.timing_offset = offset
 
         self.conversions = []
 
-        self._store_conversions()
+        if offset == 0:
+            self.update_conversions(conversions_file)
 
     def _store_conversions(self):
-        with open(self.conversions_file) as conv_file:
-            for line in conv_file:
-                print(f"conversions line is: {line}")
+        """
+        Store conversions file data.
+        """
+
+        if not self.conversions_file:
+            return
+
+        conversions_data = json.load(self.conversions_file)
+
+        if len(conversions_data) > 2 or any(
+            key not in ("offset", "conversions") for key in conversions_data.keys()
+        ):
+            return
+
+        self.timing_offset = conversions_data["offset"]
+        self.conversions = conversions_data["conversions"]
 
     def _process_caption(self, caption_text=""):
         pass
 
-    def _create_new_filename(self):
+    def _create_new_dest_path(self):
         """
-        If there is no name or no appropriate name for the destination file, a name will be created based on the original file, with '-converted' appended to the filename's stem
+        If there is no name or no appropriate name for the destination file, a name will be created based on the original file, with '-converted' appended to the filename's stem.
         """
         original_name = self.captions_file_path.stem
 
-        self.new_filename = Path(self.captions_file_path).with_stem(
+        self.new_captions_path = Path(self.captions_file_path).with_stem(
             original_name + "-converted"
         )
         print(
-            f"new destination file is: {self.new_filename} original file is: {self.captions_file_path}"
+            f"new destination file is: {self.new_captions_path} original file is: {self.captions_file_path}"
         )
 
     def update_captions_path(self, captions_file):
         """
-        Check if provided file path is a valid vtt file, update the file path property if it is, and raise an error if not
+        Check if provided file path is a valid vtt file, update the file path property if it is, and raise an error if not.
         """
         self.captions_file_path = Path(captions_file)
         if (
             not self.captions_file_path.is_file()
             or self.captions_file_path.suffix != ".vtt"
         ):
+            self.captions_file_path = None
             raise FileNotFoundError("Captions file not found")
+
+        self._store_conversions()
 
     def update_conversions(self, conversions):
         """
-        check if conversions file exists and process its contents
+        Check if conversions file exists and process its contents.
         """
         self.conversions_file = Path(conversions)
         if (
             not self.conversions_file.is_file()
-            or self.conversions_file.suffix != ".txt"
+            or self.conversions_file.suffix != ".json"
         ):
+            self.conversions_file = None
             raise FileNotFoundError("Conversions file not found")
         self._store_conversions()
 
@@ -75,10 +101,10 @@ class WebVTTConverter:
                 or new_filename_path.suffix != ".vtt"
                 or new_filename_path == self.captions_file_path
             ):
-                self._create_new_filename()
-            self.new_filename = new_name
+                self._create_new_dest_path()
+            self.new_captions_path = new_name
         else:
-            self._create_new_filename()
+            self._create_new_dest_path()
 
         def convert(self):
             # check if vtt file exists in specified directory
@@ -103,7 +129,7 @@ if __name__ == "__main__":
         "-c",
         "-conversions",
         type=str,
-        default="conversions.txt",
+        default="conversions.json",
         required=False,
         help="the text file containing the conversion rules",
     )
@@ -112,6 +138,22 @@ if __name__ == "__main__":
         "-destination",
         help="optional destination filename, default is '<previous filename>-converted.vtt'",
     )
+    parser.add_argument(
+        "-o",
+        "-offset",
+        help="Optional offset value (in ms) for the converter. If this is supplied, no conversions will be used from a .json file and only the offset will be applied.",
+    )
     args = parser.parse_args()
+    if hasattr(args, "o"):
+        offset = int(args.o)
+        if offset == 0:
+            print("Offset must be nonzero.")
+        else:
+            converter = WebVTTConverter(
+                captions_file=args.caption_filename, dest_filename=args.d, offset=offset
+            )
+    else:
+        converter = WebVTTConverter(
+            captions_file=args.caption_filename, conversions_file=args.c
+        )
     print(args.caption_filename, args.c, args.d)
-    converter = WebVTTConverter(args.caption_filename, args.c)

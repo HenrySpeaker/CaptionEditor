@@ -1,0 +1,11 @@
+{
+    "offset": 0,
+    "conversions": [
+        {
+            "key": "test",
+            "replacement": "test1",
+            "previous": "hello world",
+            "case_sensitive": false
+        }
+    ]
+}
