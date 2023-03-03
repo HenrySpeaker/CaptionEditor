@@ -2,6 +2,8 @@ import webvtt
 import argparse
 from pathlib import Path
 import json
+from datetime import datetime, timedelta
+import re
 
 
 class WebVTTConverter:
@@ -37,15 +39,19 @@ class WebVTTConverter:
         if not self.conversions_file:
             return
 
-        conversions_data = json.load(self.conversions_file)
+        with open(self.conversions_file) as conversions_json:
+            conversions_data = json.load(conversions_json)
 
         if len(conversions_data) > 2 or any(
             key not in ("offset", "conversions") for key in conversions_data.keys()
         ):
-            return
+            raise FileNotFoundError
 
         self.timing_offset = conversions_data["offset"]
         self.conversions = conversions_data["conversions"]
+
+        print(self.timing_offset)
+        print(self.conversions)
 
     def _process_caption(self, caption_text=""):
         pass
@@ -75,7 +81,7 @@ class WebVTTConverter:
             self.captions_file_path = None
             raise FileNotFoundError("Captions file not found")
 
-        self._store_conversions()
+        # self._store_conversions()
 
     def update_conversions(self, conversions):
         """
@@ -106,20 +112,55 @@ class WebVTTConverter:
         else:
             self._create_new_dest_path()
 
-        def convert(self):
-            # check if vtt file exists in specified directory
+    def convert(self):
+        pattern = re.compile(r"(\d{2,}):(\d\d):(\d\d).(\d\d\d)")
 
-            # check if requirements file exists in specified directory
+        def offset_time(time):
+            time_info = pattern.search(time).groups()
+            hours = int(time_info[0])
+            minutes = int(time_info[1])
+            seconds = int(time_info[2])
+            milliseconds = int(time_info[3]) + self.timing_offset
 
-            # process conversions and store them in appropriate data structure
+            while milliseconds >= 1000:
+                seconds += 1
+                milliseconds -= 1000
 
+            while milliseconds < 0:
+                milliseconds += 1000
+                seconds -= 1
+
+            while seconds >= 60:
+                minutes += 1
+                seconds -= 60
+
+            while seconds < 0:
+                seconds += 60
+                minutes -= 1
+
+            while minutes >= 60:
+                hours += 1
+                minutes -= 60
+
+            while minutes < 0:
+                minutes += 60
+                hours -= 1
+
+            # make sure an invalid time is not submitted
+            if min(hours, minutes, seconds, milliseconds) < 0:
+                return None
+
+            new_time = f"{str(hours).zfill(2)}:{str(minutes).zfill(2)}:{str(seconds).zfill(2)}.{str(milliseconds).zfill(3)}"
+            return new_time
+
+        # open the file and process each caption, storing the results in a new object
+        for caption in webvtt.read(self.captions_file_path):
+            start_time = caption.start
+            new_start = offset_time(start_time)
+            print(f"original start time {start_time}. new start time {new_start}")
             # note: if offset causes a caption to start with a negative timestamp it shouldn't be included in the new captions file
 
-            # open the file and process each caption, storing the results in a new object
-
-            # create a new file and put modified contents in that file
-
-            pass
+        # create a new file and put modified contents in that file
 
 
 if __name__ == "__main__":
@@ -142,9 +183,10 @@ if __name__ == "__main__":
         "-o",
         "-offset",
         help="Optional offset value (in ms) for the converter. If this is supplied, no conversions will be used from a .json file and only the offset will be applied.",
+        required=False,
     )
     args = parser.parse_args()
-    if hasattr(args, "o"):
+    if hasattr(args, "o") and args.o:
         offset = int(args.o)
         if offset == 0:
             print("Offset must be nonzero.")
@@ -156,4 +198,5 @@ if __name__ == "__main__":
         converter = WebVTTConverter(
             captions_file=args.caption_filename, conversions_file=args.c
         )
-    print(args.caption_filename, args.c, args.d)
+        converter.convert()
+    # print(args.caption_filename, args.c, args.d)
