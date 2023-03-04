@@ -103,12 +103,12 @@ class WebVTTConverter:
         if new_name:
             new_filename_path = Path(new_name)
             if (
-                not new_filename_path.is_file()
-                or new_filename_path.suffix != ".vtt"
+                new_filename_path.suffix != ".vtt"
                 or new_filename_path == self.captions_file_path
             ):
                 self._create_new_dest_path()
-            self.new_captions_path = new_name
+            else:
+                self.new_captions_path = new_filename_path
         else:
             self._create_new_dest_path()
 
@@ -196,7 +196,9 @@ if __name__ == "__main__":
             )
     else:
         converter = WebVTTConverter(
-            captions_file=args.caption_filename, conversions_file=args.c
+            captions_file=args.caption_filename,
+            conversions_file=args.c,
+            dest_filename=args.d,
         )
         converter.convert()
     # print(args.caption_filename, args.c, args.d)
