@@ -2,8 +2,8 @@ import webvtt
 import argparse
 from pathlib import Path
 import json
-from datetime import datetime, timedelta
 import re
+from flashtext import KeywordProcessor
 
 
 class WebVTTConverter:
@@ -15,7 +15,7 @@ class WebVTTConverter:
         offset=0,
     ):
         self.captions_file_path = None
-        self.conversions_file = None
+        self.conversions_file_path = None
         self.new_captions_path = None
 
         # set captions path
@@ -28,6 +28,13 @@ class WebVTTConverter:
 
         self.conversions = []
 
+        self._case_sensitive_processor = KeywordProcessor(case_sensitive=True)
+        self._case_insensitive_processor = KeywordProcessor()
+        self._previous_caption_keys_processor = KeywordProcessor()
+        self._previous_caption_keys = []
+        self._previous_captions_processors = {}
+        self._direct_conversions = {}
+
         if offset == 0:
             self.update_conversions(conversions_file)
 
@@ -36,10 +43,7 @@ class WebVTTConverter:
         Store conversions file data.
         """
 
-        if not self.conversions_file:
-            return
-
-        with open(self.conversions_file) as conversions_json:
+        with open(self.conversions_file_path) as conversions_json:
             conversions_data = json.load(conversions_json)
 
         if len(conversions_data) > 2 or any(
@@ -50,24 +54,80 @@ class WebVTTConverter:
         self.timing_offset = conversions_data["offset"]
         self.conversions = conversions_data["conversions"]
 
-        print(self.timing_offset)
-        print(self.conversions)
+    def _process_caption_contents(self, caption_text=""):
+        """
+        Replaces any kewords in current caption and records any keys seen that would be relevant for the next caption.
+        """
 
-    def _process_caption(self, caption_text=""):
-        pass
+        if caption_text in self._direct_conversions:
+            return self._direct_conversions[caption_text]
+
+        caption_text = self._case_insensitive_processor.replace_keywords(caption_text)
+        caption_text = self._case_sensitive_processor.replace_keywords(caption_text)
+
+        for key in self._previous_caption_keys:
+            caption_text = self._previous_captions_processors[key].replace_keywords(
+                caption_text
+            )
+
+        self._previous_caption_keys = (
+            self._previous_caption_keys_processor.extract_keywords(caption_text)
+        )
+        return caption_text
 
     def _create_new_dest_path(self):
         """
         If there is no name or no appropriate name for the destination file, a name will be created based on the original file, with '-converted' appended to the filename's stem.
         """
+
+        if not self.captions_file_path:
+            return
+
         original_name = self.captions_file_path.stem
 
         self.new_captions_path = Path(self.captions_file_path).with_stem(
             original_name + "-converted"
         )
-        print(
-            f"new destination file is: {self.new_captions_path} original file is: {self.captions_file_path}"
-        )
+
+    def _build_keyword_processors(self):
+        """
+        Uses the conversions data and creates keyword processors for case-sensitive, case-insensitive, and any other keys that are replaced based on previous captions.
+        """
+        self._case_sensitive_processor = KeywordProcessor(case_sensitive=True)
+        self._case_insensitive_processor = KeywordProcessor()
+
+        self._previous_caption_keys_processor = KeywordProcessor(case_sensitive=True)
+        self._previous_caption_keys = []
+
+        self._previous_captions_processors = {}
+
+        self._direct_conversions = {}
+
+        for conversion in self.conversions:
+            if "key" not in conversion:
+                continue
+            if "replacement" not in conversion:
+                continue
+            key = conversion["key"]
+            replacement = conversion["replacement"]
+
+            if "previous" in conversion and conversion["previous"]:
+                self._previous_caption_keys_processor.add_keyword(
+                    conversion["previous"]
+                )
+                self._previous_captions_processors[
+                    conversion["previous"]
+                ] = KeywordProcessor(case_sensitive=True)
+                self._previous_captions_processors[conversion["previous"]].add_keyword(
+                    key, replacement
+                )
+            elif "directConversion" in conversion and conversion["directConversion"]:
+                self._direct_conversions[conversion["key"]] = conversion["replacement"]
+            else:
+                if "caseSensitive" in conversion and conversion["caseSensitive"]:
+                    self._case_sensitive_processor.add_keyword(key, replacement)
+                else:
+                    self._case_insensitive_processor.add_keyword(key, replacement)
 
     def update_captions_path(self, captions_file):
         """
@@ -81,20 +141,19 @@ class WebVTTConverter:
             self.captions_file_path = None
             raise FileNotFoundError("Captions file not found")
 
-        # self._store_conversions()
-
     def update_conversions(self, conversions):
         """
         Check if conversions file exists and process its contents.
         """
-        self.conversions_file = Path(conversions)
+        self.conversions_file_path = Path(conversions)
         if (
-            not self.conversions_file.is_file()
-            or self.conversions_file.suffix != ".json"
+            not self.conversions_file_path.is_file()
+            or self.conversions_file_path.suffix != ".json"
         ):
-            self.conversions_file = None
+            self.conversions_file_path = None
             raise FileNotFoundError("Conversions file not found")
         self._store_conversions()
+        self._build_keyword_processors()
 
     def update_dest_captions_file(self, new_name=""):
         """
@@ -112,7 +171,7 @@ class WebVTTConverter:
         else:
             self._create_new_dest_path()
 
-    def convert(self):
+    def convert_file(self):
         pattern = re.compile(r"(\d{2,}):(\d\d):(\d\d).(\d\d\d)")
 
         def offset_time(time):
@@ -153,14 +212,29 @@ class WebVTTConverter:
             new_time = f"{str(hours).zfill(2)}:{str(minutes).zfill(2)}:{str(seconds).zfill(2)}.{str(milliseconds).zfill(3)}"
             return new_time
 
+        new_file_contents = "WEBVTT - Converted from " + str(self.captions_file_path)
+        caption_count = 0
+
         # open the file and process each caption, storing the results in a new object
         for caption in webvtt.read(self.captions_file_path):
             start_time = caption.start
             new_start = offset_time(start_time)
-            print(f"original start time {start_time}. new start time {new_start}")
-            # note: if offset causes a caption to start with a negative timestamp it shouldn't be included in the new captions file
 
-        # create a new file and put modified contents in that file
+            end_time = caption.end
+            new_end = offset_time(end_time)
+
+            if not new_start:
+                continue
+
+            new_caption = "\n" * 2 + str(caption_count) + "\n"
+            new_caption += new_start + " --> " + new_end + "\n"
+            new_caption += self._process_caption_contents(caption.text)
+
+            new_file_contents += new_caption
+            caption_count += 1
+
+        with open(self.new_captions_path, "w", encoding="utf8") as new_captions_file:
+            new_captions_file.write(new_file_contents)
 
 
 if __name__ == "__main__":
@@ -200,5 +274,4 @@ if __name__ == "__main__":
             conversions_file=args.c,
             dest_filename=args.d,
         )
-        converter.convert()
-    # print(args.caption_filename, args.c, args.d)
+        converter.convert_file()
