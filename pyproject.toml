@@ -4,3 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "WebVTT Converter"
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=prepend",
+]

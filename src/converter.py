@@ -171,7 +171,10 @@ class WebVTTConverter:
         else:
             self._create_new_dest_path()
 
-    def convert_file(self):
+    def convert_captions(self):
+        """
+        Reads captions from captions file, converts them based on offset and conversions file, and writes them to the destination file.
+        """
         pattern = re.compile(r"(\d{2,}):(\d\d):(\d\d).(\d\d\d)")
 
         def offset_time(time):
@@ -205,7 +208,7 @@ class WebVTTConverter:
                 minutes += 60
                 hours -= 1
 
-            # make sure an invalid time is not submitted
+            # since negative timestamps aren't valid in WebVTT, None is returned to signal that the current caption should not be included in the new file
             if min(hours, minutes, seconds, milliseconds) < 0:
                 return None
 
@@ -215,7 +218,6 @@ class WebVTTConverter:
         new_file_contents = "WEBVTT - Converted from " + str(self.captions_file_path)
         caption_count = 0
 
-        # open the file and process each caption, storing the results in a new object
         for caption in webvtt.read(self.captions_file_path):
             start_time = caption.start
             new_start = offset_time(start_time)
@@ -274,4 +276,4 @@ if __name__ == "__main__":
             conversions_file=args.c,
             dest_filename=args.d,
         )
-        converter.convert_file()
+        converter.convert_captions()
