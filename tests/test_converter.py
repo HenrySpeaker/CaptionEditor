@@ -3,10 +3,13 @@ from src.converter import WebVTTConverter
 import webvtt
 from pathlib import Path
 from tests.test_utils import check_identical_vtt_files
+import json
+import copy
 
 CAPTIONS_FILE = "tests/test_captions.vtt"
 EMPTY_CAPTIONS_FILE = "tests/empty.vtt"
 CONVERSIONS_FILE = "tests/test_conversions.json"
+INVALID_CONVERSIONS_FILE = "tests/invalid_conversions.json"
 DEST_FILE = "tests/new_test_captions.vtt"
 REFERENCE_DEST_FILE = "tests/reference_dest_captions.vtt"
 
@@ -19,6 +22,56 @@ def dest_file():
     path = Path(DEST_FILE)
     if path.is_file():
         path.unlink()
+
+
+@pytest.fixture()
+def conversions_file_start():
+    with open(INVALID_CONVERSIONS_FILE) as f:
+        original_contents = json.load(f)
+        yield copy.deepcopy(original_contents)
+
+    with open(INVALID_CONVERSIONS_FILE, "w") as f:
+        json.dump(original_contents, f)
+
+
+@pytest.fixture()
+def extra_conversions_contents(conversions_file_start):
+    contents = conversions_file_start
+    contents["extra_info"] = True
+    with open(INVALID_CONVERSIONS_FILE, "w") as f:
+        json.dump(contents, f)
+
+    return INVALID_CONVERSIONS_FILE
+
+
+@pytest.fixture()
+def large_pos_offset_conversions(conversions_file_start):
+    contents = conversions_file_start
+    contents["offset"] = 1000000
+    with open(INVALID_CONVERSIONS_FILE, "w") as f:
+        json.dump(contents, f)
+
+    return INVALID_CONVERSIONS_FILE
+
+
+@pytest.fixture()
+def large_neg_offset_conversions(conversions_file_start):
+    contents = conversions_file_start
+    contents["offset"] = -1000000
+    with open(INVALID_CONVERSIONS_FILE, "w") as f:
+        json.dump(contents, f)
+
+    return INVALID_CONVERSIONS_FILE
+
+
+# @pytest.fixture()
+# def negative_conversions_offset(conversions_file_start):
+#     contents = copy.deepcopy(conversions_file_start)
+#     contents["offset"] = -100000
+#     with open(INVALID_CONVERSIONS_FILE, "w") as f:
+#         json.dump(contents, f)
+
+#     return INVALID_CONVERSIONS_FILE
 
 
 def test_captions_not_found():
@@ -43,6 +96,24 @@ def test_conversions_wrong_extension():
     with pytest.raises(FileNotFoundError) as exc_info:
         converter = WebVTTConverter(CAPTIONS_FILE, "test.txt")
     assert str(exc_info.value) == "Conversions file not found"
+
+
+def test_invalid_conversions_contents(extra_conversions_contents):
+    with pytest.raises(ValueError) as exc_info:
+        converter = WebVTTConverter(CAPTIONS_FILE, extra_conversions_contents)
+    assert str(exc_info.value) == "Invalid conversions.json contents"
+
+
+def test_large_pos_offset(large_pos_offset_conversions):
+    converter = WebVTTConverter(CAPTIONS_FILE, large_pos_offset_conversions)
+    converter.convert_captions()
+    assert converter != None
+
+
+def test_large_neg_offset(large_neg_offset_conversions):
+    converter = WebVTTConverter(CAPTIONS_FILE, large_neg_offset_conversions)
+    converter.convert_captions()
+    assert converter != None
 
 
 def test_invalid_dest_extension():
@@ -86,3 +157,7 @@ def test_empty_captions(dest_file):
     )
     converter.convert_captions()
     assert len(webvtt.read(dest_file)) == 0
+
+
+def test_cli_arguments():
+    pass

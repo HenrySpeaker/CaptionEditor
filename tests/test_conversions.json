@@ -17,6 +17,16 @@
             "key": "5,",
             "replacement": "5----------",
             "directConversion": true
+        },
+        {
+            "key": "hello world",
+            "replacement": "hello world!"
+        },
+        {
+            "replacement": "no key"
+        },
+        {
+            "key": "no replacement"
         }
     ]
 }
