@@ -1,10 +1,11 @@
 import pytest
-from src.converter import WebVTTConverter
+from src.converter import WebVTTConverter, main
 import webvtt
 from pathlib import Path
 from tests.test_utils import check_identical_vtt_files
 import json
 import copy
+import argparse
 
 CAPTIONS_FILE = "tests/test_captions.vtt"
 EMPTY_CAPTIONS_FILE = "tests/empty.vtt"
@@ -159,5 +160,36 @@ def test_empty_captions(dest_file):
     assert len(webvtt.read(dest_file)) == 0
 
 
-def test_cli_arguments():
-    pass
+def test_valid_cli_arguments(dest_file):
+    args = [CAPTIONS_FILE, "-c", CONVERSIONS_FILE, "-d", dest_file]
+    args_out = main(args)
+    assert args_out.caption_filename == CAPTIONS_FILE
+    assert args_out.c == CONVERSIONS_FILE
+    assert args_out.d == dest_file
+
+
+def test_missing_captions_cli_argument(dest_file):
+    with pytest.raises(SystemExit) as exit_info:
+        args = ["-c", CONVERSIONS_FILE, "-d", dest_file]
+        args_out = main(args)
+    assert exit_info.type == SystemExit
+    assert exit_info.value.code == 2
+
+
+def test_offset_cli_arg(dest_file):
+    args = [CAPTIONS_FILE, "-c", CONVERSIONS_FILE, "-d", dest_file, "-o", "10"]
+    args_out = main(args)
+    assert args_out.caption_filename == CAPTIONS_FILE
+    assert args_out.c == CONVERSIONS_FILE
+    assert args_out.d == dest_file
+    assert args_out.o == "10"
+
+
+def test_offset_zero_cli_arg(dest_file, capsys):
+    args = [CAPTIONS_FILE, "-c", CONVERSIONS_FILE, "-d", dest_file, "-o", "0"]
+    args_out = main(args)
+    assert args_out.caption_filename == CAPTIONS_FILE
+    assert args_out.c == CONVERSIONS_FILE
+    assert args_out.d == dest_file
+    captured = capsys.readouterr()
+    assert captured.out == "Offset must be nonzero.\n"

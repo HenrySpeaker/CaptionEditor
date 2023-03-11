@@ -255,7 +255,7 @@ class WebVTTConverter:
             new_captions_file.write(new_file_contents)
 
 
-if __name__ == "__main__":
+def main(args=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("caption_filename", type=str, help="the file to be converted")
     parser.add_argument(
@@ -277,7 +277,7 @@ if __name__ == "__main__":
         help="Optional offset value (in ms) for the converter. If this is supplied, no conversions will be used from a .json file and only the offset will be applied.",
         required=False,
     )
-    args = parser.parse_args()
+    args = parser.parse_args(args)
     if hasattr(args, "o") and args.o:
         offset = int(args.o)
         if offset == 0:
@@ -293,3 +293,9 @@ if __name__ == "__main__":
             dest_filename=args.d,
         )
         converter.convert_captions()
+
+    return args
+
+
+if __name__ == "__main__":
+    main()
