@@ -13,6 +13,7 @@ class WebVTTConverter:
         conversions_file="conversions.json",
         dest_filename="",
         offset=0,
+        cutoff=-1,
     ):
         self._captions_file_path = None
         self.conversions_file_path = None
@@ -38,6 +39,8 @@ class WebVTTConverter:
         # If no offset value was provided or if it was zero, check for and process a conversions file
         if offset == 0:
             self.update_conversions(conversions_file)
+
+        self.update_cutoff(cutoff)
 
     def _store_conversions(self):
         """
@@ -141,6 +144,12 @@ class WebVTTConverter:
                 else:
                     self._case_insensitive_processor.add_keyword(key, replacement)
 
+    def update_cutoff(self, new_cutoff):
+        """
+        Updates the time cutoff (in seconds) for captions to be written. Any captions, after the offset has been applied, that would occur after the cutoff will not be included.
+        """
+        self.cutoff = new_cutoff
+
     def update_captions_path(self, captions_file):
         """
         Check if provided file path is a valid vtt file, update the file path property if it is, and raise an error if not.
@@ -226,22 +235,28 @@ class WebVTTConverter:
 
             # since negative timestamps aren't valid in WebVTT, None is returned to signal that the current caption should not be included in the new file
             if min(hours, minutes, seconds, milliseconds) < 0:
-                return None
+                return (None, 0)
 
             new_time = f"{str(hours).zfill(2)}:{str(minutes).zfill(2)}:{str(seconds).zfill(2)}.{str(milliseconds).zfill(3)}"
-            return new_time
+            return (
+                new_time,
+                hours * 3600 + minutes * 60 + seconds + milliseconds / 1000,
+            )
 
         new_file_contents = "WEBVTT - Converted from " + str(self._captions_file_path)
         caption_count = 0
 
         for caption in webvtt.read(self._captions_file_path):
             start_time = caption.start
-            new_start = offset_time(start_time)
+            new_start, seconds_after_start = offset_time(start_time)
 
             end_time = caption.end
-            new_end = offset_time(end_time)
+            new_end, _ = offset_time(end_time)
 
             if not new_start:
+                continue
+
+            if self.cutoff >= 0 and seconds_after_start > self.cutoff:
                 continue
 
             new_caption = "\n" * 2 + str(caption_count) + "\n"

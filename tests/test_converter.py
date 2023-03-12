@@ -193,3 +193,9 @@ def test_offset_zero_cli_arg(dest_file, capsys):
     assert args_out.d == dest_file
     captured = capsys.readouterr()
     assert captured.out == "Offset must be nonzero.\n"
+
+
+def test_cutoff(dest_file):
+    converter = WebVTTConverter(CAPTIONS_FILE, CONVERSIONS_FILE, dest_file, cutoff=60)
+    converter.convert_captions()
+    assert len(webvtt.read(dest_file)) == 8
