@@ -25,6 +25,7 @@ class WebVTTConverter:
         # Update or create file path for converted captions
         self.update_dest_captions_file(dest_filename)
 
+        # Initialize everything that might be needed for caption conversions
         self.timing_offset = offset
 
         self.conversions = []
@@ -37,6 +38,7 @@ class WebVTTConverter:
         self._direct_conversions = {}
 
         # If no offset value was provided or if it was zero, check for and process a conversions file
+        # If an offset is provided, it is assumed that no conversions are desired and the captions only need to be offset
         if offset == 0:
             self.update_conversions(conversions_file)
 
@@ -47,6 +49,7 @@ class WebVTTConverter:
         Store conversions file data.
         """
 
+        # Gather conversions data from file
         with open(self.conversions_file_path) as conversions_json:
             conversions_data = json.load(conversions_json)
 
@@ -56,6 +59,13 @@ class WebVTTConverter:
         ):
             raise ValueError("Invalid conversions.json contents")
 
+        if not isinstance(conversions_data["offset"], int):
+            raise ValueError("Offset must be integer")
+
+        if not isinstance(conversions_data["conversions"], list):
+            raise ValueError("Conversions must be list")
+
+        # Set the offset and the list of conversions
         self.timing_offset = conversions_data["offset"]
         self.conversions = conversions_data["conversions"]
 
