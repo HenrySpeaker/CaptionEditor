@@ -1,0 +1,12 @@
+{
+    "offset": 0,
+    "conversions": [
+        {
+            "key": "Marcela",
+            "replacement": "Marcella",
+            "previous": "everyone",
+            "caseSensitive": false,
+            "directConversion": false
+        }
+    ]
+}
