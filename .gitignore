@@ -130,5 +130,6 @@ dmypy.json
 
 # project-specific items
 notes.txt
-*.vtt
+/test_captions.vtt
+test_captions_short.vtt
 .vscode
