@@ -6,12 +6,12 @@ from tests.test_utils import check_identical_vtt_files
 import json
 import copy
 
-CAPTIONS_FILE = "tests/test_captions.vtt"
-EMPTY_CAPTIONS_FILE = "tests/empty.vtt"
-CONVERSIONS_FILE = "tests/test_conversions.json"
-INVALID_CONVERSIONS_FILE = "tests/invalid_conversions.json"
-DEST_FILE = "tests/new_test_captions.vtt"
-REFERENCE_DEST_FILE = "tests/reference_dest_captions.vtt"
+CAPTIONS_FILE = "tests/test_data/test_captions.vtt"
+EMPTY_CAPTIONS_FILE = "tests/test_data/empty.vtt"
+CONVERSIONS_FILE = "tests/test_data/test_conversions.json"
+INVALID_CONVERSIONS_FILE = "tests/test_data/invalid_conversions.json"
+DEST_FILE = "tests/test_data/new_test_captions.vtt"
+REFERENCE_DEST_FILE = "tests/test_data/reference_dest_captions.vtt"
 
 
 @pytest.fixture()
@@ -130,12 +130,16 @@ def test_invalid_dest_extension():
     converter = WebVTTConverter(
         CAPTIONS_FILE, CONVERSIONS_FILE, dest_filename="wrong_filetype.txt"
     )
-    assert str(converter.new_captions_path) == r"tests\test_captions-converted.vtt"
+    assert (
+        str(converter.new_captions_path)
+        == r"tests\test_data\test_captions-converted.vtt"
+    )
 
 
 def test_valid_captions_and_conversions_files():
     converter = WebVTTConverter(
-        captions_file=CAPTIONS_FILE, conversions_file="tests/test_conversions.json"
+        captions_file=CAPTIONS_FILE,
+        conversions_file=CONVERSIONS_FILE,
     )
     assert converter != None
 
@@ -143,7 +147,7 @@ def test_valid_captions_and_conversions_files():
 def test_valid_captions_conversions_and_dest_files(dest_file):
     converter = WebVTTConverter(
         captions_file=CAPTIONS_FILE,
-        conversions_file="tests/test_conversions.json",
+        conversions_file=CONVERSIONS_FILE,
         dest_filename=dest_file,
     )
     assert converter != None
@@ -164,7 +168,7 @@ def test_dict_conversions(dict_conversions):
 def test_conversions(dest_file):
     converter = WebVTTConverter(
         captions_file=CAPTIONS_FILE,
-        conversions_file="tests/test_conversions.json",
+        conversions_file=CONVERSIONS_FILE,
         dest_filename=dest_file,
     )
     converter.convert_captions()
@@ -174,7 +178,7 @@ def test_conversions(dest_file):
 def test_empty_captions(dest_file):
     converter = WebVTTConverter(
         captions_file=EMPTY_CAPTIONS_FILE,
-        conversions_file="tests/test_conversions.json",
+        conversions_file=CONVERSIONS_FILE,
         dest_filename=dest_file,
     )
     converter.convert_captions()
