@@ -311,6 +311,7 @@ def main(args=None):
             converter = WebVTTConverter(
                 captions_file=args.caption_filename, dest_filename=args.d, offset=offset
             )
+            converter.convert_captions()
     else:
         converter = WebVTTConverter(
             captions_file=args.caption_filename,
