@@ -2,16 +2,36 @@ import pytest
 from src.converter import WebVTTConverter, main
 import webvtt
 from pathlib import Path
-from tests.test_utils import check_identical_vtt_files
+from tests.test_utils import check_identical_vtt_files, check_identical_contents
 import json
 import copy
+from bs4.builder import XMLParsedAsHTMLWarning
 
-CAPTIONS_FILE = "tests/test_data/test_captions.vtt"
-EMPTY_CAPTIONS_FILE = "tests/test_data/empty.vtt"
-CONVERSIONS_FILE = "tests/test_data/test_conversions.json"
-INVALID_CONVERSIONS_FILE = "tests/test_data/invalid_conversions.json"
+CAPTIONS_FILE = "tests/test_data/initial_captions/test_vtt.vtt"
+EMPTY_CAPTIONS_FILE = "tests/test_data/initial_captions/empty.vtt"
+
 DEST_FILE = "tests/test_data/new_test_captions.vtt"
 REFERENCE_DEST_FILE = "tests/test_data/reference_dest_captions.vtt"
+
+CAPTIONS_ROOT = "tests/test_data/initial_captions/"
+CONVERSIONS_ROOT = "tests/test_data/conversions/"
+CONVERTED_CAPTIONS_ROOT = "tests/test_data/converted_captions/"
+
+DFXP_CAPTIONS = CAPTIONS_ROOT + "test_dfxp.dfxp"
+SRT_CAPTIONS = CAPTIONS_ROOT + "test_srt.srt"
+TTML_CAPTIONS = CAPTIONS_ROOT + "test_ttml.ttml"
+VTT_CAPTIONS = CAPTIONS_ROOT + "test_vtt.vtt"
+EMPTY_CAPTIONS = CAPTIONS_ROOT + "empty.vtt"
+
+
+# CONVERSIONS_FILE = CONVERSIONS_ROOT + "invalid_conversions.json"
+CONVERSIONS_FILE = CONVERSIONS_ROOT + "conversions.json"
+
+
+CONVERTED_DFXP = CONVERTED_CAPTIONS_ROOT + "converted.dfxp"
+CONVERTED_SRT = CONVERTED_CAPTIONS_ROOT + "converted.srt"
+CONVERTED_TTML = CONVERTED_CAPTIONS_ROOT + "converted.ttml"
+CONVERTED_VTT = CONVERTED_CAPTIONS_ROOT + "converted.vtt"
 
 
 @pytest.fixture()
@@ -24,13 +44,31 @@ def dest_file():
         path.unlink()
 
 
+@pytest.fixture(
+    params=[
+        (DFXP_CAPTIONS, "dfxp.dfxp", CONVERTED_CAPTIONS_ROOT, CONVERTED_DFXP, ".dfxp"),
+        (SRT_CAPTIONS, "srt.srt", CONVERTED_CAPTIONS_ROOT, CONVERTED_SRT, ".srt"),
+        (TTML_CAPTIONS, "ttml.ttml", CONVERTED_CAPTIONS_ROOT, CONVERTED_TTML, ".ttml"),
+        (VTT_CAPTIONS, "vtt.vtt", CONVERTED_CAPTIONS_ROOT, CONVERTED_VTT, ".vtt"),
+    ]
+)
+def test_files(request):
+    yield request
+
+    captions, dest, root, reference, type = request.param
+    # checks if destination file is created and deletes it if so
+    path = Path(root) / dest
+    if path.is_file():
+        path.unlink()
+
+
 @pytest.fixture()
 def conversions_file_start():
-    with open(INVALID_CONVERSIONS_FILE) as f:
+    with open(CONVERSIONS_FILE) as f:
         original_contents = json.load(f)
         yield copy.deepcopy(original_contents)
 
-    with open(INVALID_CONVERSIONS_FILE, "w") as f:
+    with open(CONVERSIONS_FILE, "w") as f:
         json.dump(original_contents, f)
 
 
@@ -38,50 +76,50 @@ def conversions_file_start():
 def extra_conversions_contents(conversions_file_start):
     contents = conversions_file_start
     contents["extra_info"] = True
-    with open(INVALID_CONVERSIONS_FILE, "w") as f:
+    with open(CONVERSIONS_FILE, "w") as f:
         json.dump(contents, f)
 
-    return INVALID_CONVERSIONS_FILE
+    return CONVERSIONS_FILE
 
 
 @pytest.fixture()
 def large_pos_offset_conversions(conversions_file_start):
     contents = conversions_file_start
     contents["offset"] = 1000000
-    with open(INVALID_CONVERSIONS_FILE, "w") as f:
+    with open(CONVERSIONS_FILE, "w") as f:
         json.dump(contents, f)
 
-    return INVALID_CONVERSIONS_FILE
+    return CONVERSIONS_FILE
 
 
 @pytest.fixture()
 def large_neg_offset_conversions(conversions_file_start):
     contents = conversions_file_start
     contents["offset"] = -1000000
-    with open(INVALID_CONVERSIONS_FILE, "w") as f:
+    with open(CONVERSIONS_FILE, "w") as f:
         json.dump(contents, f)
 
-    return INVALID_CONVERSIONS_FILE
+    return CONVERSIONS_FILE
 
 
 @pytest.fixture()
 def string_offset_conversions(conversions_file_start):
     contents = conversions_file_start
     contents["offset"] = "hello world"
-    with open(INVALID_CONVERSIONS_FILE, "w") as f:
+    with open(CONVERSIONS_FILE, "w") as f:
         json.dump(contents, f)
 
-    return INVALID_CONVERSIONS_FILE
+    return CONVERSIONS_FILE
 
 
 @pytest.fixture()
 def dict_conversions(conversions_file_start):
     contents = conversions_file_start
     contents["conversions"] = {}
-    with open(INVALID_CONVERSIONS_FILE, "w") as f:
+    with open(CONVERSIONS_FILE, "w") as f:
         json.dump(contents, f)
 
-    return INVALID_CONVERSIONS_FILE
+    return CONVERSIONS_FILE
 
 
 def test_captions_not_found():
@@ -130,10 +168,7 @@ def test_invalid_dest_extension():
     converter = WebVTTConverter(
         CAPTIONS_FILE, CONVERSIONS_FILE, dest_filename="wrong_filetype.txt"
     )
-    assert (
-        str(converter.new_captions_path)
-        == r"tests\test_data\test_captions-converted.vtt"
-    )
+    assert str(converter._dest_filename) == "test_vtt-converted"
 
 
 def test_valid_captions_and_conversions_files():
@@ -182,7 +217,7 @@ def test_empty_captions(dest_file):
         dest_filename=dest_file,
     )
     converter.convert_captions()
-    assert len(webvtt.read(dest_file)) == 0
+    assert not Path(dest_file).is_file()
 
 
 def test_valid_cli_arguments(dest_file):
@@ -221,6 +256,21 @@ def test_offset_zero_cli_arg(dest_file, capsys):
 
 
 def test_cutoff(dest_file):
-    converter = WebVTTConverter(CAPTIONS_FILE, CONVERSIONS_FILE, dest_file, cutoff=60)
+    converter = WebVTTConverter(CAPTIONS_FILE, CONVERSIONS_FILE, dest_file, cutoff=100)
     converter.convert_captions()
-    assert len(webvtt.read(dest_file)) == 8
+    assert len(webvtt.read(dest_file)) == 18
+
+
+@pytest.mark.filterwarnings("ignore:XMLParsedAsHTMLWarning")
+def test_multiple_extensions(test_files):
+    # print(test_files.param)
+    captions, dest, root, reference, type = test_files.param
+    converter = WebVTTConverter(
+        captions_file=captions,
+        conversions_file=CONVERSIONS_FILE,
+        dest_filename=dest,
+        dest_directory=root,
+        dest_file_extensions=[type],
+    )
+    converter.convert_captions()
+    assert check_identical_contents(Path(root) / dest, reference)

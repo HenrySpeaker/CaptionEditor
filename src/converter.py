@@ -48,11 +48,11 @@ class WebVTTConverter:
 
         self._dest_filetypes = []
 
-        for extension in dest_file_extensions:
-            if extension in self.READERS:
-                self._dest_filetypes.append(extension)
-
-        if not self._dest_filetypes:
+        if dest_file_extensions:
+            for extension in dest_file_extensions:
+                if extension in self.READERS:
+                    self._dest_filetypes.append(extension)
+        else:
             self._dest_filetypes = [".vtt"]
 
         # Store the destination directory, verifying that it exists
@@ -60,7 +60,7 @@ class WebVTTConverter:
         self.update_dest_directory(dest_directory)
 
         self.conversions_file_path = None
-        self._vtt_converted_path = None
+        # self._vtt_converted_path = None
 
         # Initialize everything that might be needed for caption conversions
         self.timing_offset = offset
@@ -229,7 +229,11 @@ class WebVTTConverter:
         """
 
         if new_name:
-            self._dest_filename = new_name
+            test_path = Path(new_name)
+            if test_path.suffix not in self.READERS:
+                self._create_new_dest_filename()
+            else:
+                self._dest_filename = new_name
         else:
             self._create_new_dest_filename()
 
@@ -330,9 +334,9 @@ class WebVTTConverter:
         for caption in webvtt.read(vtt_captions_path):
             start_time = caption.start
             new_start, seconds_after_start = offset_time(start_time)
-            print(
-                f"Current cutoff: {self.cutoff}, current seconds: {seconds_after_start}"
-            )
+            # print(
+            #     f"Current cutoff: {self.cutoff}, current seconds: {seconds_after_start}"
+            # )
 
             end_time = caption.end
             new_end, _ = offset_time(end_time)
@@ -356,7 +360,11 @@ class WebVTTConverter:
         # with open(self._vtt_converted_path, "w", encoding="utf8") as new_captions_file:
         #     new_captions_file.write(new_file_contents)
 
-        new_caption_set = WebVTTReader().read(new_file_contents)
+        try:
+            new_caption_set = WebVTTReader().read(new_file_contents)
+        except CaptionReadNoCaptions:
+            print("Cannot convert an empty captions file")
+            return
 
         # Convert captions to all specified file types
         for extension in self._dest_filetypes:
@@ -371,6 +379,10 @@ class WebVTTConverter:
                 new_file.write(curr_contents)
 
         # Clean up any temporary files if needed. Look for a starting VTT file that is temporary and a captions-converted VTT file if that's not needed in the file output.
+
+        if vtt_captions_path != self._captions_file_path:
+            if vtt_captions_path.is_file():
+                vtt_captions_path.unlink()
 
 
 def main(args=None):
@@ -400,20 +412,23 @@ def main(args=None):
         "-dest_types",
         help="Optional list of filetypes that captions will be converted to. Default is WebVTT only.",
         nargs="*",
+        default=[],
     )
     parser.add_argument(
         "-dd",
         "-dest_dir",
         help="A directory that already exists that all converted files should be written in.",
+        default="",
     )
     parser.add_argument(
         "-co",
         "-cutoff",
         help="An integer (in seconds) that specifies the timestamp after which no more captions should occur.",
+        default=0,
     )
     args = parser.parse_args(args)
     cutoff = float("inf")
-    if hasattr(args, "co"):
+    if hasattr(args, "co") and args.co:
         cutoff = int(args.co)
     if hasattr(args, "o") and args.o:
         offset = int(args.o)

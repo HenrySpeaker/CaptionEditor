@@ -23,5 +23,8 @@ dependencies = [
 addopts = [
     "--import-mode=prepend",
 ]
+filterwarnings = [
+    "ignore:It looks like you're parsing an XML document using an HTML parser.",
+]
 
 [tool.setuptools_scm]
