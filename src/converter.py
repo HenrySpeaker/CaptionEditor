@@ -10,7 +10,7 @@ from pycaption import *
 SUPPORTED_FILE_TYPES = {".vtt", ".srt", ".ttml", ".dfxp"}
 
 
-class WebVTTConverter:
+class CaptionConverter:
     READERS = {
         ".vtt": WebVTTReader(),
         ".srt": SRTReader(),
@@ -40,12 +40,10 @@ class WebVTTConverter:
         self.update_captions_path(captions_file)
 
         # Store the destination filename template, creating a new one if necessary
-
         self._dest_filename = ""
         self.update_dest_filename(dest_filename)
 
         # Store the destination filetypes, verifying that they are all valid types
-
         self._dest_filetypes = []
 
         if dest_file_extensions:
@@ -60,7 +58,6 @@ class WebVTTConverter:
         self.update_dest_directory(dest_directory)
 
         self.conversions_file_path = None
-        # self._vtt_converted_path = None
 
         # Initialize everything that might be needed for caption conversions
         self.timing_offset = offset
@@ -180,6 +177,7 @@ class WebVTTConverter:
                 self._previous_captions_processors[conversion["previous"]].add_keyword(
                     key, replacement
                 )
+
             # These are the captions meant to be converted directly, without any partial replacement
             elif "directConversion" in conversion and conversion["directConversion"]:
                 self._direct_conversions[conversion["key"]] = conversion["replacement"]
@@ -244,11 +242,6 @@ class WebVTTConverter:
         test_path = Path(new_directory)
         if not new_directory:
             self._dest_directory = self._captions_file_path.parent
-            if not self._dest_directory.is_dir():
-                self._dest_directory = None
-                raise FileNotFoundError(
-                    "The parent of the specified captions file is not a directory"
-                )
         if test_path.is_dir():
             self._dest_directory = test_path
         else:
@@ -292,7 +285,7 @@ class WebVTTConverter:
                 minutes += 60
                 hours -= 1
 
-            # since negative timestamps aren't valid in WebVTT, None is returned to signal that the current caption should not be included in the new file
+            # Since negative timestamps aren't valid in WebVTT, None is returned to signal that the current caption should not be included in the new file
             if min(hours, minutes, seconds, milliseconds) < 0:
                 return (None, 0)
 
@@ -327,16 +320,12 @@ class WebVTTConverter:
             vtt_captions_path = self._captions_file_path
 
         # Modify the captions from the VTT file
-
         new_file_contents = "WEBVTT - Converted from " + str(vtt_captions_path)
         caption_count = 0
 
         for caption in webvtt.read(vtt_captions_path):
             start_time = caption.start
             new_start, seconds_after_start = offset_time(start_time)
-            # print(
-            #     f"Current cutoff: {self.cutoff}, current seconds: {seconds_after_start}"
-            # )
 
             end_time = caption.end
             new_end, _ = offset_time(end_time)
@@ -353,12 +342,6 @@ class WebVTTConverter:
 
             new_file_contents += new_caption
             caption_count += 1
-
-        # self._vtt_converted_path = vtt_captions_path.with_stem(
-        #     vtt_captions_path.stem + "-temp-converted"
-        # )
-        # with open(self._vtt_converted_path, "w", encoding="utf8") as new_captions_file:
-        #     new_captions_file.write(new_file_contents)
 
         try:
             new_caption_set = WebVTTReader().read(new_file_contents)
@@ -379,7 +362,6 @@ class WebVTTConverter:
                 new_file.write(curr_contents)
 
         # Clean up any temporary files if needed. Look for a starting VTT file that is temporary and a captions-converted VTT file if that's not needed in the file output.
-
         if vtt_captions_path != self._captions_file_path:
             if vtt_captions_path.is_file():
                 vtt_captions_path.unlink()
@@ -436,7 +418,7 @@ def main(args=None):
         if offset == 0:
             print("Offset must be nonzero.")
         else:
-            converter = WebVTTConverter(
+            converter = CaptionConverter(
                 captions_file=args.caption_filename,
                 dest_filename=args.d,
                 dest_directory=args.dd,
@@ -446,7 +428,7 @@ def main(args=None):
             )
             converter.convert_captions()
     else:
-        converter = WebVTTConverter(
+        converter = CaptionConverter(
             captions_file=args.caption_filename,
             conversions_file=args.c,
             dest_filename=args.d,
