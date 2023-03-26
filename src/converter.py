@@ -252,14 +252,14 @@ class CaptionConverter:
         Reads captions from captions file, converts them based on offset and conversions file, and writes them to the destination file.
         """
 
-        pattern = re.compile(r"(\d{2,}):(\d\d):(\d\d).(\d\d\d)")
+        timestamp_pattern = re.compile(r"((\d{2,}):)?(\d\d):(\d\d).(\d\d\d)")
 
         def offset_time(time):
-            time_info = pattern.search(time).groups()
-            hours = int(time_info[0])
-            minutes = int(time_info[1])
-            seconds = int(time_info[2])
-            milliseconds = int(time_info[3]) + self.timing_offset
+            time_info = timestamp_pattern.search(time).groups()
+            hours = int(time_info[1]) if time_info[1] else 0
+            minutes = int(time_info[2])
+            seconds = int(time_info[3])
+            milliseconds = int(time_info[4]) + self.timing_offset
 
             while milliseconds >= 1000:
                 seconds += 1
