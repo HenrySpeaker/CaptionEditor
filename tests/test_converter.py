@@ -8,10 +8,9 @@ import copy
 
 
 CAPTIONS_FILE = "tests/test_data/initial_captions/test_vtt.vtt"
-EMPTY_CAPTIONS_FILE = "tests/test_data/initial_captions/empty.vtt"
+
 
 DEST_FILE = "tests/test_data/new_test_captions.vtt"
-REFERENCE_DEST_FILE = "tests/test_data/reference_dest_captions.vtt"
 
 CAPTIONS_ROOT = "tests/test_data/initial_captions/"
 CONVERSIONS_ROOT = "tests/test_data/conversions/"
@@ -21,10 +20,9 @@ DFXP_CAPTIONS = CAPTIONS_ROOT + "test_dfxp.dfxp"
 SRT_CAPTIONS = CAPTIONS_ROOT + "test_srt.srt"
 TTML_CAPTIONS = CAPTIONS_ROOT + "test_ttml.ttml"
 VTT_CAPTIONS = CAPTIONS_ROOT + "test_vtt.vtt"
-EMPTY_CAPTIONS = CAPTIONS_ROOT + "empty.vtt"
+EMPTY_CAPTIONS_FILE = CAPTIONS_ROOT + "empty.vtt"
 
 
-# CONVERSIONS_FILE = CONVERSIONS_ROOT + "invalid_conversions.json"
 CONVERSIONS_FILE = CONVERSIONS_ROOT + "conversions.json"
 
 
@@ -212,16 +210,6 @@ def test_dict_conversions(dict_conversions):
     assert str(exc_info.value) == "Conversions must be list"
 
 
-# def test_conversions(dest_file):
-#     converter = CaptionConverter(
-#         captions_file=CAPTIONS_FILE,
-#         conversions_file=CONVERSIONS_FILE,
-#         dest_filename=dest_file,
-#     )
-#     converter.convert_captions()
-#     assert check_identical_vtt_files(dest_file, REFERENCE_DEST_FILE)
-
-
 def test_empty_captions(dest_file):
     converter = CaptionConverter(
         captions_file=EMPTY_CAPTIONS_FILE,
@@ -273,7 +261,6 @@ def test_cutoff(dest_file):
     assert len(webvtt.read(dest_file)) == 18
 
 
-@pytest.mark.filterwarnings("ignore:XMLParsedAsHTMLWarning")
 def test_multiple_extensions(test_files):
     captions, dest, root, reference, type = test_files.param
     converter = CaptionConverter(
