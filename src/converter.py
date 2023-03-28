@@ -231,7 +231,7 @@ class CaptionConverter:
             if test_path.suffix not in self.READERS:
                 self._create_new_dest_filename()
             else:
-                self._dest_filename = new_name
+                self._dest_filename = test_path.stem
         else:
             self._create_new_dest_filename()
 
