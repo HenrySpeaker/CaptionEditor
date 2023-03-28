@@ -1,12 +1,13 @@
 [build-system]
-requires = ["setuptools", "setuptools_scm[toml]>=6.2"]
+requires = ["setuptools>=42", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
 dynamic = ["version"]
-name = "WebVTT Caption Converter"
-author = "Henry Speaker"
-author_email = "HenrySpeaker24@gmail.com"
+name = "Caption-Converter"
+authors = [
+    {name = "Henry Speaker", email = "HenrySpeaker24@gmail.com"},
+]
 readme = "README.md"
 description = "A tool to replace words and phrases in a WebVTT file with new words or phrases, and to offset each caption by a specified amount."
 dependencies = [
