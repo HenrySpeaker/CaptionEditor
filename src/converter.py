@@ -39,6 +39,10 @@ class CaptionConverter:
         self._captions_file_path = None
         self.update_captions_path(captions_file)
 
+        # Store the destination directory, verifying that it exists
+        self._dest_directory = None
+        self.update_dest_directory(dest_directory)
+
         # Store the destination filename template, creating a new one if necessary
         self._dest_filename = ""
         self.update_dest_filename(dest_filename)
@@ -52,10 +56,6 @@ class CaptionConverter:
                     self._dest_filetypes.append(extension)
         else:
             self._dest_filetypes = [".vtt"]
-
-        # Store the destination directory, verifying that it exists
-        self._dest_directory = None
-        self.update_dest_directory(dest_directory)
 
         self.conversions_file_path = None
 
@@ -223,15 +223,17 @@ class CaptionConverter:
 
     def update_dest_filename(self, new_name=""):
         """
-        Check for valid filename for output file and create one if necessary. If no filename, a non-vtt filename, or the same filename as the original captions file is entered a new filename will be created.
+        Check for supplied filename for output file and create one if necessary. If no filename, a non-vtt filename, or the same filename as the original captions file is entered a new filename will be created.
         """
 
         if new_name:
-            test_path = Path(new_name)
-            if test_path.suffix not in self.READERS:
+            if (
+                new_name == self._captions_file_path.stem
+                and self._captions_file_path.parent == self._dest_directory
+            ):
                 self._create_new_dest_filename()
             else:
-                self._dest_filename = test_path.stem
+                self._dest_filename = new_name
         else:
             self._create_new_dest_filename()
 

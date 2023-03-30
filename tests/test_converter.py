@@ -6,29 +6,32 @@ from tests.test_utils import check_identical_contents
 import json
 import copy
 
+# Files and filenames to test naming
+CAPTIONS_FILE_NAME = "test_vtt"
+CAPTIONS_FILE = "tests/test_data/initial_captions/" + CAPTIONS_FILE_NAME + ".vtt"
 
-CAPTIONS_FILE = "tests/test_data/initial_captions/test_vtt.vtt"
-TEMP_DEST_DIR = "tests/test_data/"
-TEMP_DEST_FILE = TEMP_DEST_DIR + "temp_test_captions.vtt"
+# Initial files to test conversions
+INITIAL_CAPTIONS_ROOT = "tests/test_data/initial_captions/"
+DFXP_CAPTIONS = INITIAL_CAPTIONS_ROOT + "test_dfxp.dfxp"
+SRT_CAPTIONS = INITIAL_CAPTIONS_ROOT + "test_srt.srt"
+TTML_CAPTIONS = INITIAL_CAPTIONS_ROOT + "test_ttml.ttml"
+VTT_CAPTIONS = INITIAL_CAPTIONS_ROOT + "test_vtt.vtt"
+EMPTY_CAPTIONS_FILE = INITIAL_CAPTIONS_ROOT + "empty.vtt"
 
-CAPTIONS_ROOT = "tests/test_data/initial_captions/"
+# Conversions files
 CONVERSIONS_ROOT = "tests/test_data/conversions/"
-CONVERTED_CAPTIONS_ROOT = "tests/test_data/converted_captions/"
-
-DFXP_CAPTIONS = CAPTIONS_ROOT + "test_dfxp.dfxp"
-SRT_CAPTIONS = CAPTIONS_ROOT + "test_srt.srt"
-TTML_CAPTIONS = CAPTIONS_ROOT + "test_ttml.ttml"
-VTT_CAPTIONS = CAPTIONS_ROOT + "test_vtt.vtt"
-EMPTY_CAPTIONS_FILE = CAPTIONS_ROOT + "empty.vtt"
-
-
 CONVERSIONS_FILE = CONVERSIONS_ROOT + "conversions.json"
 
-
+# Reference files after conversion
+CONVERTED_CAPTIONS_ROOT = "tests/test_data/converted_captions/"
 CONVERTED_DFXP = CONVERTED_CAPTIONS_ROOT + "converted.dfxp"
 CONVERTED_SRT = CONVERTED_CAPTIONS_ROOT + "converted.srt"
 CONVERTED_TTML = CONVERTED_CAPTIONS_ROOT + "converted.ttml"
 CONVERTED_VTT = CONVERTED_CAPTIONS_ROOT + "converted.vtt"
+
+# Temporary files to be cleaned up after
+TEMP_DEST_DIR = "tests/test_data/"
+TEMP_DEST_FILE = "temp_test_captions.vtt"
 
 
 @pytest.fixture()
@@ -36,7 +39,7 @@ def dest_file():
     yield {"directory": TEMP_DEST_DIR, "name": TEMP_DEST_FILE}
 
     # checks if destination file is created and deletes it if so
-    path = Path(TEMP_DEST_FILE)
+    path = Path(TEMP_DEST_DIR) / TEMP_DEST_FILE
     if path.is_file():
         path.unlink()
 
@@ -183,11 +186,24 @@ def test_large_neg_offset(large_neg_offset_conversions, dest_file):
     assert converter != None
 
 
-def test_invalid_dest_extension():
+def test_dest_filename_same_as_captions():
     converter = CaptionConverter(
-        CAPTIONS_FILE, CONVERSIONS_FILE, dest_filename="wrong_filetype.txt"
+        CAPTIONS_FILE,
+        CONVERSIONS_FILE,
+        dest_filename=CAPTIONS_FILE_NAME,
+        dest_directory=INITIAL_CAPTIONS_ROOT,
     )
-    assert str(converter._dest_filename) == "test_vtt-converted"
+    assert converter._dest_filename == CAPTIONS_FILE_NAME + "-converted"
+
+
+def test_dest_filename_same_as_captions_diff_directory():
+    converter = CaptionConverter(
+        CAPTIONS_FILE,
+        CONVERSIONS_FILE,
+        dest_filename=CAPTIONS_FILE_NAME,
+        dest_directory=TEMP_DEST_DIR,
+    )
+    assert converter._dest_filename == CAPTIONS_FILE_NAME
 
 
 def test_valid_captions_and_conversions_files():
@@ -286,7 +302,7 @@ def test_cutoff(dest_file):
         cutoff=100,
     )
     converter.convert_captions()
-    assert len(webvtt.read(dest_file["name"])) == 18
+    assert len(webvtt.read(Path(dest_file["directory"]) / dest_file["name"])) == 18
 
 
 def test_multiple_extensions(test_files):
