@@ -17,7 +17,8 @@ dependencies = [
     "flashtext",
     "pytest",
     "setuptools",
-    "webvtt-py"
+    "webvtt-py",
+    "pycaption"
 ]
 
 [tool.pytest.ini_options]
