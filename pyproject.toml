@@ -12,7 +12,6 @@ readme = "README.md"
 description = "A tool to replace words and phrases in a caption file with new words or phrases, offset each caption by a specified amount, and cut off captions after a specified time."
 dependencies = [
     "black",
-    "build",
     "coverage",
     "flashtext",
     "pytest",
