@@ -13,7 +13,7 @@ description = "A tool to replace words and phrases in a caption file with new wo
 dependencies = [
     "black",
     "coverage",
-    "flashtext",
+    "flashtext2",
     "pytest",
     "setuptools",
     "webvtt-py",

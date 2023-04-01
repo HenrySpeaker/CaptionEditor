@@ -3,7 +3,9 @@ import argparse
 from pathlib import Path
 import json
 import re
-from flashtext import KeywordProcessor
+
+# from flashtext import KeywordProcessor
+from flashtext2 import KeywordProcessor
 from pycaption import *
 
 
