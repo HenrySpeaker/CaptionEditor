@@ -1,5 +1,6 @@
 import pytest
-from src.captionconverter.converter import CaptionConverter, main
+from src.captionconverter import CaptionConverter
+from src.captionconverter.converter import main
 import webvtt
 from pathlib import Path
 from tests.test_utils import check_identical_contents
