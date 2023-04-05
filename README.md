@@ -19,7 +19,13 @@ This class can be imported and used in a python file or conversions can be initi
 
 ### Using the CaptionConverter class
 The CaptionConverter class accepts a number of parameters:
-
+- captions_file: 
+- conversions_file: 
+- dest_filename:
+- dest_file_extensions:
+- dest_directory:
+- offset:
+- cutoff:
 
 
 ### Using the command line
