@@ -334,3 +334,10 @@ def test_update_invalid_directory():
     with pytest.raises(FileNotFoundError) as exc_info:
         converter.update_dest_directory("NOT A DIRECTORY")
     assert str(exc_info.value) == "The destination directory does not exist."
+
+
+def test_dest_dir_as_path():
+    converter = CaptionConverter(
+        CAPTIONS_FILE, CONVERSIONS_FILE, dest_directory=Path("tests/test_data")
+    )
+    assert converter != None

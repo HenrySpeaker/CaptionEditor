@@ -27,14 +27,14 @@ class CaptionConverter:
 
     def __init__(
         self,
-        captions_file,
-        conversions_file="conversions.json",
-        dest_filename="",
-        dest_file_extensions=[".vtt"],
-        dest_directory="",
-        offset=0,
-        cutoff=-1,
-    ):
+        captions_file: str | Path,
+        conversions_file: Path | str = "conversions.json",
+        dest_filename: str = "",
+        dest_file_extensions: list[str] = [".vtt"],
+        dest_directory: Path | str = "",
+        offset: int = 0,
+        cutoff: float | int = -1,
+    ) -> None:
         # Validate and store the captions file. Check that it exists and has a correct extension.
         self._captions_file_path = None
         self.update_captions_path(captions_file)
@@ -78,7 +78,7 @@ class CaptionConverter:
 
         self.update_cutoff(cutoff)
 
-    def _store_conversions(self):
+    def _store_conversions(self) -> None:
         """
         Store conversions file data.
         """
@@ -103,7 +103,7 @@ class CaptionConverter:
         self.timing_offset = conversions_data["offset"]
         self.conversions = conversions_data["conversions"]
 
-    def _process_caption_contents(self, caption_text=""):
+    def _process_caption_contents(self, caption_text: str = "") -> str:
         """
         Replaces any kewords in current caption and records any keys seen that would be relevant for the next caption.
         """
@@ -128,7 +128,7 @@ class CaptionConverter:
         )
         return caption_text
 
-    def _create_new_dest_filename(self):
+    def _create_new_dest_filename(self) -> None:
         """
         If there is no name or no appropriate name for the destination file, a name will be created based on the original file, with '-converted' appended to the filename's stem.
         """
@@ -137,7 +137,7 @@ class CaptionConverter:
         original_name = self._captions_file_path.stem
         self._dest_filename = original_name + "-converted"
 
-    def _build_keyword_processors(self):
+    def _build_keyword_processors(self) -> None:
         """
         Uses the conversions data and creates keyword processors for case-sensitive, case-insensitive, and any other keys that are replaced based on previous captions.
         """
@@ -187,15 +187,15 @@ class CaptionConverter:
                 else:
                     self._case_insensitive_processor.add_keyword(key, replacement)
 
-    def update_cutoff(self, new_cutoff):
+    def update_cutoff(self, new_cutoff: int | float) -> None:
         """
         Updates the time cutoff (in seconds) for captions to be written. Any captions, after the offset has been applied, that would occur after the cutoff will not be included.
         """
         self.cutoff = new_cutoff
 
-    def update_captions_path(self, captions_file):
+    def update_captions_path(self, captions_file: str | Path) -> None:
         """
-        Check if provided file path is a valid vtt file, update the file path property if it is, and raise an error if not.
+        Check if provided file string or path exists and is of a valid type, update the file path property. If it isn't, raise an error.
         """
 
         self._captions_file_path = Path(captions_file)
@@ -206,9 +206,9 @@ class CaptionConverter:
             self._captions_file_path = None
             raise FileNotFoundError("Captions file not found")
 
-    def update_conversions(self, conversions):
+    def update_conversions(self, conversions: str | Path) -> None:
         """
-        Check if conversions file exists and process its contents.
+        Accepts a string of the relative or absolute path to conversions file and checks if conversions file exists. If it does exist, its contents are processed and stored in the converter.
         """
 
         self.conversions_file_path = Path(conversions)
@@ -221,9 +221,10 @@ class CaptionConverter:
         self._store_conversions()
         self._build_keyword_processors()
 
-    def update_dest_filename(self, new_name=""):
+    def update_dest_filename(self, new_name: str = "") -> None:
         """
-        Check for supplied filename for output file and create one if necessary. If no filename, a non-vtt filename, or the same filename as the original captions file is entered a new filename will be created.
+        Check for supplied filename for output file and create one if necessary. If no filename,
+        or the same filename as the original captions file is supplied and the destination directory is the same, a new filename will be created.
         """
 
         if new_name:
@@ -237,9 +238,9 @@ class CaptionConverter:
         else:
             self._create_new_dest_filename()
 
-    def update_dest_directory(self, new_directory=""):
+    def update_dest_directory(self, new_directory: Path | str = ""):
         """
-        Verifies that the new destination directory exists and updates the converter.
+        Accepts a string of the path to the destination directory, verifies that the new destination directory exists, and sets the new destination directory.
         """
         test_path = Path(new_directory)
         if not new_directory:
@@ -249,9 +250,9 @@ class CaptionConverter:
         else:
             raise FileNotFoundError("The destination directory does not exist.")
 
-    def convert_captions(self):
+    def convert_captions(self) -> None:
         """
-        Reads captions from captions file, converts them based on offset and conversions file, and writes them to the destination file.
+        Reads captions from captions file, converts them based on offset, cutoff, and conversions file, and writes them to the destination file(s) in the destination directory.
         """
 
         timestamp_pattern = re.compile(r"((\d{2,}):)?(\d\d):(\d\d).(\d\d\d)")
@@ -369,7 +370,7 @@ class CaptionConverter:
                 vtt_captions_path.unlink()
 
 
-def main(args=None):
+def main(args=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("caption_filename", type=str, help="the file to be converted")
     parser.add_argument(
