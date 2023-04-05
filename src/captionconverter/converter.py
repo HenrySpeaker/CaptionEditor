@@ -27,13 +27,13 @@ class CaptionConverter:
 
     def __init__(
         self,
-        captions_file: str,
-        conversions_file: str = "conversions.json",
+        captions_file: str | Path,
+        conversions_file: Path | str = "conversions.json",
         dest_filename: str = "",
         dest_file_extensions: list[str] = [".vtt"],
-        dest_directory: str = "",
+        dest_directory: Path | str = "",
         offset: int = 0,
-        cutoff: int = -1,
+        cutoff: float | int = -1,
     ) -> None:
         # Validate and store the captions file. Check that it exists and has a correct extension.
         self._captions_file_path = None
@@ -187,15 +187,15 @@ class CaptionConverter:
                 else:
                     self._case_insensitive_processor.add_keyword(key, replacement)
 
-    def update_cutoff(self, new_cutoff: int) -> None:
+    def update_cutoff(self, new_cutoff: int | float) -> None:
         """
         Updates the time cutoff (in seconds) for captions to be written. Any captions, after the offset has been applied, that would occur after the cutoff will not be included.
         """
         self.cutoff = new_cutoff
 
-    def update_captions_path(self, captions_file: str) -> None:
+    def update_captions_path(self, captions_file: str | Path) -> None:
         """
-        Check if provided file path is a valid path, update the file path property if it is, and raise an error if not.
+        Check if provided file string or path exists and is of a valid type, update the file path property. If it isn't, raise an error.
         """
 
         self._captions_file_path = Path(captions_file)
@@ -206,7 +206,7 @@ class CaptionConverter:
             self._captions_file_path = None
             raise FileNotFoundError("Captions file not found")
 
-    def update_conversions(self, conversions: str) -> None:
+    def update_conversions(self, conversions: str | Path) -> None:
         """
         Accepts a string of the relative or absolute path to conversions file and checks if conversions file exists. If it does exist, its contents are processed and stored in the converter.
         """
@@ -238,7 +238,7 @@ class CaptionConverter:
         else:
             self._create_new_dest_filename()
 
-    def update_dest_directory(self, new_directory: str = ""):
+    def update_dest_directory(self, new_directory: Path | str = ""):
         """
         Accepts a string of the path to the destination directory, verifies that the new destination directory exists, and sets the new destination directory.
         """
