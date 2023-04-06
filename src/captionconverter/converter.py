@@ -4,8 +4,15 @@ from pathlib import Path
 import json
 import re
 from flashtext2 import KeywordProcessor
-from pycaption import *
-
+from pycaption import (
+    WebVTTReader,
+    SRTReader,
+    DFXPReader,
+    WebVTTWriter,
+    SRTWriter,
+    DFXPWriter,
+    CaptionReadNoCaptions,
+)
 
 SUPPORTED_FILE_TYPES = {".vtt", ".srt", ".ttml", ".dfxp"}
 
@@ -36,11 +43,11 @@ class CaptionConverter:
         cutoff: float | int = -1,
     ) -> None:
         # Validate and store the captions file. Check that it exists and has a correct extension.
-        self._captions_file_path = None
+        self._captions_file_path: Path = Path()
         self.update_captions_path(captions_file)
 
         # Store the destination directory, verifying that it exists
-        self._dest_directory = None
+        self._dest_directory: Path = Path()
         self.update_dest_directory(dest_directory)
 
         # Store the destination filename template, creating a new one if necessary
@@ -57,19 +64,19 @@ class CaptionConverter:
         else:
             self._dest_filetypes = [".vtt"]
 
-        self.conversions_file_path = None
+        self.conversions_file_path: Path = Path()
 
         # Initialize everything that might be needed for caption conversions
         self.timing_offset = offset
 
-        self.conversions = []
+        self.conversions: list = []
 
         self._case_sensitive_processor = KeywordProcessor(case_sensitive=True)
         self._case_insensitive_processor = KeywordProcessor()
         self._previous_caption_keys_processor = KeywordProcessor()
-        self._previous_caption_keys = []
-        self._previous_captions_processors = {}
-        self._direct_conversions = {}
+        self._previous_caption_keys: list = []
+        self._previous_captions_processors: dict = {}
+        self._direct_conversions: dict = {}
 
         # If no offset value was provided or if it was zero, check for and process a conversions file
         # If an offset is provided, it is assumed that no conversions are desired and the captions only need to be offset
@@ -203,7 +210,7 @@ class CaptionConverter:
             not self._captions_file_path.is_file()
             or self._captions_file_path.suffix not in self.READERS
         ):
-            self._captions_file_path = None
+            self._captions_file_path = Path()
             raise FileNotFoundError("Captions file not found")
 
     def update_conversions(self, conversions: str | Path) -> None:
@@ -216,7 +223,7 @@ class CaptionConverter:
             not self.conversions_file_path.is_file()
             or self.conversions_file_path.suffix != ".json"
         ):
-            self.conversions_file_path = None
+            self.conversions_file_path = Path()
             raise FileNotFoundError("Conversions file not found")
         self._store_conversions()
         self._build_keyword_processors()
