@@ -17,15 +17,20 @@ The package contains one class: CaptionConverter.
 
 This class can be imported and used in a python file or conversions can be initiated from the command line.
 
+
+
 ### Using the CaptionConverter class
 The CaptionConverter class accepts a number of parameters:
-- captions_file: 
-- conversions_file: 
-- dest_filename:
+- captions_file: A Path object or the string of a path that points to the original captions file.
+- conversions_file: A Path object or the string of a path that points to the conversions JSON file. Instructions are available [here](#setting-up-the-conversions-json-file) for constructing a conversions JSON file.
+- dest_filename: An optional string that specifies the stem of any new caption files that are created. If no name is supplied, the default name for any new captions files will be &lt;captions file stem&gt;-converted.&lt;extension&gt;
 - dest_file_extensions:
 - dest_directory:
 - offset:
 - cutoff:
+
+#### Setting up the conversions JSON file
+The conversions file will contain the
 
 
 ### Using the command line
