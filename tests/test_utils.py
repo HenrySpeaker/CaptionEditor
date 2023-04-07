@@ -5,4 +5,7 @@ def check_identical_contents(file1, file2):
     with open(file2, "r", encoding="utf8") as f2:
         f2_contents = f2.read()
 
+    print(len(f1_contents))
+    print(len(f2_contents))
+
     return f1_contents == f2_contents

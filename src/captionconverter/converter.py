@@ -68,7 +68,7 @@ class CaptionConverter:
 
         # Initialize everything that might be needed for caption conversions
         self.timing_offset = offset
-
+        self.cutoff: int = -1
         self.conversions: list = []
 
         self._case_sensitive_processor = KeywordProcessor(case_sensitive=True)
@@ -83,7 +83,8 @@ class CaptionConverter:
         if offset == 0:
             self.update_conversions(conversions_file)
 
-        self.update_cutoff(cutoff)
+        if cutoff >= 0:
+            self.update_cutoff(cutoff)
 
     def _store_conversions(self) -> None:
         """
@@ -95,20 +96,26 @@ class CaptionConverter:
             conversions_data = json.load(conversions_json)
 
         # Verify that the structure of the file matches what's expected
-        if len(conversions_data) > 2 or any(
-            key not in ("offset", "conversions") for key in conversions_data.keys()
+        if len(conversions_data) > 3 or any(
+            key not in ("offset", "cutoff", "conversions")
+            for key in conversions_data.keys()
         ):
             raise ValueError("Invalid conversions.json contents")
 
         if not isinstance(conversions_data["offset"], int):
             raise ValueError("Offset must be integer")
 
+        if not isinstance(conversions_data["cutoff"], int):
+            raise ValueError("Cutoff must be integer")
+
         if not isinstance(conversions_data["conversions"], list):
             raise ValueError("Conversions must be list")
 
         # Set the offset and the list of conversions
         self.timing_offset = conversions_data["offset"]
+        self.cutoff = conversions_data["cutoff"]
         self.conversions = conversions_data["conversions"]
+        print(self.cutoff)
 
     def _process_caption_contents(self, caption_text: str = "") -> str:
         """
@@ -419,7 +426,7 @@ def main(args=None) -> argparse.Namespace:
         default=0,
     )
     args = parser.parse_args(args)
-    cutoff = float("inf")
+    cutoff = -1
     if hasattr(args, "co") and args.co:
         cutoff = int(args.co)
     if hasattr(args, "o") and args.o:

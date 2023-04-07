@@ -114,6 +114,26 @@ def string_offset_conversions(conversions_file_start):
 
 
 @pytest.fixture()
+def pos_cutoff_conversions(conversions_file_start):
+    contents = conversions_file_start
+    contents["cutoff"] = 100
+    with open(CONVERSIONS_FILE, "w") as f:
+        json.dump(contents, f)
+
+    return CONVERSIONS_FILE
+
+
+@pytest.fixture()
+def string_cutoff_conversions(conversions_file_start):
+    contents = conversions_file_start
+    contents["cutoff"] = "hello world"
+    with open(CONVERSIONS_FILE, "w") as f:
+        json.dump(contents, f)
+
+    return CONVERSIONS_FILE
+
+
+@pytest.fixture()
 def dict_conversions(conversions_file_start):
     contents = conversions_file_start
     contents["conversions"] = {}
@@ -231,6 +251,12 @@ def test_string_offset(string_offset_conversions):
     assert str(exc_info.value) == "Offset must be integer"
 
 
+def test_string_cutoff(string_cutoff_conversions):
+    with pytest.raises(ValueError) as exc_info:
+        converter = CaptionConverter(CAPTIONS_FILE, string_cutoff_conversions)
+    assert str(exc_info.value) == "Cutoff must be integer"
+
+
 def test_dict_conversions(dict_conversions):
     with pytest.raises(ValueError) as exc_info:
         converter = CaptionConverter(CAPTIONS_FILE, dict_conversions)
@@ -304,6 +330,21 @@ def test_cutoff(dest_file):
     )
     converter.convert_captions()
     assert len(webvtt.read(Path(dest_file["directory"]) / dest_file["name"])) == 18
+
+
+def test_cutoff_in_conversions(pos_cutoff_conversions, dest_file):
+    converter = CaptionConverter(
+        CAPTIONS_FILE,
+        pos_cutoff_conversions,
+        dest_filename=dest_file["name"],
+        dest_directory=dest_file["directory"],
+    )
+    converter.convert_captions()
+    assert converter.cutoff == 100
+    assert check_identical_contents(
+        Path(dest_file["directory"]) / dest_file["name"],
+        "tests/test_data/converted_captions/cutoff.vtt",
+    )
 
 
 def test_multiple_extensions(test_files):
