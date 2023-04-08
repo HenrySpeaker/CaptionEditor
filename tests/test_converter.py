@@ -6,6 +6,9 @@ from pathlib import Path
 from tests.test_utils import check_identical_contents
 import json
 import copy
+import os
+
+DIRECTORY_PARENT_PATH = Path(os.getcwd())
 
 # Files and filenames to test naming
 CAPTIONS_FILE_NAME = "test_vtt"
@@ -382,3 +385,19 @@ def test_dest_dir_as_path():
         CAPTIONS_FILE, CONVERSIONS_FILE, dest_directory=Path("tests/test_data")
     )
     assert converter != None
+
+
+def test_absolute_paths(dest_file):
+    abs_captions_file = DIRECTORY_PARENT_PATH / CAPTIONS_FILE
+    abs_conversions_file = DIRECTORY_PARENT_PATH / CONVERSIONS_FILE
+    abs_dest_dir = DIRECTORY_PARENT_PATH / dest_file["directory"]
+    print(abs_captions_file, abs_conversions_file, abs_dest_dir)
+    converter = CaptionConverter(
+        captions_file=abs_captions_file,
+        conversions_file=abs_conversions_file,
+        dest_directory=abs_dest_dir,
+        dest_filename=dest_file["name"],
+    )
+    converter.convert_captions()
+
+    assert check_identical_contents(abs_dest_dir / dest_file["name"], CONVERTED_VTT)
