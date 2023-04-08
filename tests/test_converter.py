@@ -35,7 +35,7 @@ CONVERTED_VTT = CONVERTED_CAPTIONS_ROOT + "converted.vtt"
 
 # Temporary files to be cleaned up after
 TEMP_DEST_DIR = "tests/test_data/"
-TEMP_DEST_FILE = "temp_test_captions.vtt"
+TEMP_DEST_FILE = "temp_test_captions"
 
 
 @pytest.fixture()
@@ -43,7 +43,7 @@ def dest_file():
     yield {"directory": TEMP_DEST_DIR, "name": TEMP_DEST_FILE}
 
     # checks if destination file is created and deletes it if so
-    path = Path(TEMP_DEST_DIR) / TEMP_DEST_FILE
+    path = Path(TEMP_DEST_DIR) / (TEMP_DEST_FILE + ".vtt")
     if path.is_file():
         path.unlink()
 
@@ -332,7 +332,10 @@ def test_cutoff(dest_file):
         cutoff=100,
     )
     converter.convert_captions()
-    assert len(webvtt.read(Path(dest_file["directory"]) / dest_file["name"])) == 18
+    assert (
+        len(webvtt.read(Path(dest_file["directory"]) / (dest_file["name"] + ".vtt")))
+        == 18
+    )
 
 
 def test_cutoff_in_conversions(pos_cutoff_conversions, dest_file):
@@ -345,7 +348,7 @@ def test_cutoff_in_conversions(pos_cutoff_conversions, dest_file):
     converter.convert_captions()
     assert converter.cutoff == 100
     assert check_identical_contents(
-        Path(dest_file["directory"]) / dest_file["name"],
+        Path(dest_file["directory"]) / (dest_file["name"] + ".vtt"),
         "tests/test_data/converted_captions/cutoff.vtt",
     )
 
@@ -391,7 +394,6 @@ def test_absolute_paths(dest_file):
     abs_captions_file = DIRECTORY_PARENT_PATH / CAPTIONS_FILE
     abs_conversions_file = DIRECTORY_PARENT_PATH / CONVERSIONS_FILE
     abs_dest_dir = DIRECTORY_PARENT_PATH / dest_file["directory"]
-    print(abs_captions_file, abs_conversions_file, abs_dest_dir)
     converter = CaptionConverter(
         captions_file=abs_captions_file,
         conversions_file=abs_conversions_file,
@@ -400,4 +402,6 @@ def test_absolute_paths(dest_file):
     )
     converter.convert_captions()
 
-    assert check_identical_contents(abs_dest_dir / dest_file["name"], CONVERTED_VTT)
+    assert check_identical_contents(
+        abs_dest_dir / (dest_file["name"] + ".vtt"), CONVERTED_VTT
+    )
