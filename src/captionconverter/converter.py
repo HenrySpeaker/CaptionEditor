@@ -3,6 +3,7 @@ import argparse
 from pathlib import Path
 import json
 import re
+import sys
 from flashtext2 import KeywordProcessor
 from pycaption import (
     WebVTTReader,
@@ -385,6 +386,8 @@ class CaptionConverter:
 
 
 def main(args=None) -> argparse.Namespace:
+    if not args:
+        args = sys.argv[1:]
     parser = argparse.ArgumentParser()
     parser.add_argument("caption_filename", type=str, help="the file to be converted")
     parser.add_argument(

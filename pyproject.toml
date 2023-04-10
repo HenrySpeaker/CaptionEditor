@@ -28,3 +28,6 @@ filterwarnings = [
 ]
 
 [tool.setuptools_scm]
+
+[project.scripts]
+convert-captions = "captionconverter.converter:main"
