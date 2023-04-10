@@ -74,7 +74,7 @@ class CaptionConverter:
 
         self._case_sensitive_processor = KeywordProcessor(case_sensitive=True)
         self._case_insensitive_processor = KeywordProcessor()
-        self._previous_caption_keys_processor = KeywordProcessor()
+        self._previous_caption_keys_processor = KeywordProcessor(case_sensitive=True)
         self._previous_caption_keys: list = []
         self._previous_captions_processors: dict = {}
         self._direct_conversions: dict = {}
