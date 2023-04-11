@@ -16,7 +16,8 @@ dependencies = [
     "pytest",
     "setuptools",
     "webvtt-py",
-    "pycaption"
+    "pycaption",
+    "xmldiff"
 ]
 
 [tool.pytest.ini_options]
@@ -25,6 +26,7 @@ addopts = [
 ]
 filterwarnings = [
     "ignore:It looks like you're parsing an XML document using an HTML parser.",
+    "ignore:pkg_resources is deprecated as an API"
 ]
 
 [tool.setuptools_scm]
