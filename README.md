@@ -1,9 +1,17 @@
-# Caption Converter
+# CaptionConverter
 
 ## Project Description
+CaptionConverter helps you convert captions between common caption filetypes as well as modify the contents of the captions files themselves. You can replace words and phrases inside of caption text as well as modify the timing of captions. 
+
 I created this package after spending significant amounts of time manually correcting the same typos in caption files. The repetitive work seemed like a good candidate for automation so the project was initially built to parse captions and replace common typos with corrections. After that functionality was built the option to convert captions to various common caption filetypes was added.
 
-The package uses [pycaption](https://pypi.org/project/pycaption/) to convert caption files to other caption filetypes, [webvtt-py](https://pypi.org/project/webvtt-py/) to parse the captions, and [flashtext2](https://pypi.org/project/flashtext2/) to replace the typos with corrections in each caption.
+The package uses [pycaption](https://pypi.org/project/pycaption/) to convert caption files to other caption filetypes, [webvtt-py](https://pypi.org/project/webvtt-py/) to parse the captions, and [flashtext2](https://pypi.org/project/flashtext2/) to replace the words and phrases with corrections in each caption.
+
+
+You are free to copy, modify, and distribute CaptionConverter with attribution under the terms of the MIT license.
+
+## Prerequisites
+CaptionConverter requires [Python 3.10+](https://www.python.org/downloads/) and [pip](https://pip.pypa.io/en/stable/installation/).
 
 ## Installation
 Use pip to install CaptionConverter
@@ -32,12 +40,16 @@ The CaptionConverter class accepts a number of parameters:
 
 - offset: An integer, in milliseconds, that measures the timing offset for each caption. A positive value increases the timestamp for each caption's start and end by the specified number of milliseconds, and a negative offset decreases the timestamp by the specified number of milliseconds. If the offset would cause a timestamp to become negative, the caption which the timestamp belongs to will not be included in the conversions. 
 
-    NOTE: if a non-zero offset value is provided, it is assumed that no additional conversions (with the exception of an optional cutoff) is desired and the contents of the conversions file will not automatically be stored. If the user wishes to pass in a non-zero offset and use the conversions file, the method CaptionConverter.update_conversions(*conversions_file*) can be used to store the contents of the conversions file.
+    NOTE: if a non-zero offset value is provided, it is assumed that no additional conversions (with the exception of an optional cutoff) is desired and the contents of the conversions file will not automatically be stored. If the user wishes to pass in a non-zero offset *and* use the conversions file, the method CaptionConverter.update_conversions(*conversions_file*) can be used to store the contents of the conversions file after the converter has been initialized.
 
 - cutoff: An integer, in seconds. Any caption that starts after the number of seconds specified by the cutoff has passed will not be included in the conversions.
 
 #### Setting up the conversions JSON file
-The conversions file will contain the text conversions to be applied, as well as optional offset and cutoff values. The conversions file must be a JSON file. This is an example that demonstrates the structure:
+The conversions file will contain the text conversions to be applied, as well as optional offset and cutoff values. If an offset value is not included, no offset will be applied. If a cutoff value is not included, no cutoff will be applied.
+
+Note: A negative cutoff value will not cut off any captions, but a zero or positive cutoff value will cut off captions after the specified number of seconds.
+
+The conversions file must be a JSON file. This is an example that demonstrates the structure:
 ```
 {
     "offset": 10000,
