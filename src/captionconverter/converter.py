@@ -70,7 +70,7 @@ class CaptionConverter:
         # Initialize everything that might be needed for caption conversions
         self.timing_offset = offset
         self.cutoff: int = -1
-        self.conversions: list = []
+        self._conversions: list = []
 
         self._case_sensitive_processor = KeywordProcessor(case_sensitive=True)
         self._case_insensitive_processor = KeywordProcessor()
@@ -103,20 +103,28 @@ class CaptionConverter:
         ):
             raise ValueError("Invalid conversions.json contents")
 
-        if not isinstance(conversions_data["offset"], int):
-            raise ValueError("Offset must be integer")
+        # Set the offset and the list of conversions
 
-        if not isinstance(conversions_data["cutoff"], int):
-            raise ValueError("Cutoff must be integer")
+        if "offset" in conversions_data:
+            if not isinstance(conversions_data["offset"], int):
+                raise ValueError("Offset must be integer")
+            else:
+                self.timing_offset = conversions_data["offset"]
+        else:
+            self.timing_offset = 0
+
+        if "cutoff" in conversions_data:
+            if not isinstance(conversions_data["cutoff"], int):
+                raise ValueError("Cutoff must be integer")
+            else:
+                self.cutoff = conversions_data["cutoff"]
+        else:
+            self.cutoff = -1
 
         if not isinstance(conversions_data["conversions"], list):
             raise ValueError("Conversions must be list")
 
-        # Set the offset and the list of conversions
-        self.timing_offset = conversions_data["offset"]
-        self.cutoff = conversions_data["cutoff"]
-        self.conversions = conversions_data["conversions"]
-        print(self.cutoff)
+        self._conversions = conversions_data["conversions"]
 
     def _process_caption_contents(self, caption_text: str = "") -> str:
         """
@@ -173,7 +181,7 @@ class CaptionConverter:
         # This stores any conversions that are meant to process an entire caption that matches exactly and replace it with new contents
         self._direct_conversions = {}
 
-        for conversion in self.conversions:
+        for conversion in self._conversions:
             if "key" not in conversion:
                 continue
             if "replacement" not in conversion:

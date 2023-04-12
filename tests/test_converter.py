@@ -32,6 +32,7 @@ CONVERTED_DFXP = CONVERTED_CAPTIONS_ROOT + "converted.dfxp"
 CONVERTED_SRT = CONVERTED_CAPTIONS_ROOT + "converted.srt"
 CONVERTED_TTML = CONVERTED_CAPTIONS_ROOT + "converted.ttml"
 CONVERTED_VTT = CONVERTED_CAPTIONS_ROOT + "converted.vtt"
+NO_OFFSET_CUTOFF = CONVERTED_CAPTIONS_ROOT + "no_cutoff_offset.vtt"
 
 # Temporary files to be cleaned up after
 TEMP_DEST_DIR = "tests/test_data/"
@@ -140,6 +141,18 @@ def string_cutoff_conversions(conversions_file_start):
 def dict_conversions(conversions_file_start):
     contents = conversions_file_start
     contents["conversions"] = {}
+    with open(CONVERSIONS_FILE, "w") as f:
+        json.dump(contents, f)
+
+    return CONVERSIONS_FILE
+
+
+@pytest.fixture()
+def no_offset_cutoff_conversions(conversions_file_start):
+    contents = conversions_file_start
+    del contents["offset"]
+    del contents["cutoff"]
+    print(contents)
     with open(CONVERSIONS_FILE, "w") as f:
         json.dump(contents, f)
 
@@ -404,4 +417,18 @@ def test_absolute_paths(dest_file):
 
     assert check_identical_contents(
         abs_dest_dir / (dest_file["name"] + ".vtt"), CONVERTED_VTT
+    )
+
+
+def test_missing_offset_cutoff_in_conversions(no_offset_cutoff_conversions, dest_file):
+    converter = CaptionConverter(
+        captions_file=VTT_CAPTIONS,
+        conversions_file=no_offset_cutoff_conversions,
+        dest_filename=dest_file["name"],
+        dest_directory=dest_file["directory"],
+    )
+    print(converter._conversions)
+    converter.convert_captions()
+    assert check_identical_contents(
+        Path(dest_file["directory"]) / (dest_file["name"] + ".vtt"), NO_OFFSET_CUTOFF
     )
