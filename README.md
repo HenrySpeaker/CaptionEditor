@@ -1,36 +1,35 @@
-# CaptionConverter
+# CaptionEditor
 
 ## Project Description
-CaptionConverter helps you convert captions between common caption filetypes as well as modify the contents of the captions files themselves. You can replace words and phrases inside of caption text as well as modify the timing of captions. 
-
-I created this package after spending significant amounts of time manually correcting the same typos in caption files. The repetitive work seemed like a good candidate for automation so the project was initially built to parse captions and replace common typos with corrections. After that functionality was built the option to convert captions to various common caption filetypes was added.
+CaptionEditor helps you modify the contents of the captions files and convert captions between common caption filetypes. You can replace words and phrases inside of caption text as well as modify the timing of captions. 
 
 The package uses [pycaption](https://pypi.org/project/pycaption/) to convert caption files to other caption filetypes, [webvtt-py](https://pypi.org/project/webvtt-py/) to parse the captions, and [flashtext2](https://pypi.org/project/flashtext2/) to replace the words and phrases with corrections in each caption.
 
 
-You are free to copy, modify, and distribute CaptionConverter with attribution under the terms of the MIT license.
+You are free to copy, modify, and distribute CaptionEditor with attribution under the terms of the MIT license.
 
 ## Prerequisites
-CaptionConverter requires [Python 3.10+](https://www.python.org/downloads/) and [pip](https://pip.pypa.io/en/stable/installation/).
+CaptionEditor requires [Python 3.10+](https://www.python.org/downloads/) and [pip](https://pip.pypa.io/en/stable/installation/).
 
 ## Installation
-Use pip to install CaptionConverter
+Use pip to install CaptionEditor
 
 ```bash
-pip install captionconverter
+pip install captioneditor
 ```
 
 ## Usage
-The package contains one class: CaptionConverter.
+The package contains one class: Editor.
 
 This class can be imported and used in a python file or conversions can be initiated from the command line.
 
 
+### The Editor class
+#### Initializing the Editor class
+The Editor class accepts a number of parameters:
+- captions_file: (Required) A Path object or the string of a path that points to the initial captions file.
 
-### Using the CaptionConverter class
-The CaptionConverter class accepts a number of parameters:
-- captions_file: A Path object or the string of a path that points to the original captions file.
-- conversions_file: A Path object or the string of a path that points to the conversions JSON file. Instructions are available [here](#setting-up-the-conversions-json-file) for constructing a conversions JSON file.
+- conversions_file: A Path object or the string of a path that points to the conversions JSON file. Instructions are available [here](#setting-up-the-conversions-json-file) for constructing a conversions JSON file. If no conversions file is found, the Editor will look for a file called "conversions.json" in the current directory.
 
 - dest_filename: An optional string that specifies the stem of any new caption files that are created. If no name is supplied, the default name for any new captions files will be &lt;captions file stem&gt;-converted.&lt;extension&gt;
 
@@ -40,9 +39,40 @@ The CaptionConverter class accepts a number of parameters:
 
 - offset: An integer, in milliseconds, that measures the timing offset for each caption. A positive value increases the timestamp for each caption's start and end by the specified number of milliseconds, and a negative offset decreases the timestamp by the specified number of milliseconds. If the offset would cause a timestamp to become negative, the caption which the timestamp belongs to will not be included in the conversions. 
 
-    NOTE: if a non-zero offset value is provided, it is assumed that no additional conversions (with the exception of an optional cutoff) is desired and the contents of the conversions file will not automatically be stored. If the user wishes to pass in a non-zero offset *and* use the conversions file, the method CaptionConverter.update_conversions(*conversions_file*) can be used to store the contents of the conversions file after the converter has been initialized.
+    NOTE: if a non-zero offset value is provided, it is assumed that no additional conversions (with the exception of an optional cutoff) is desired and the contents of the conversions file will not automatically be stored. If the user wishes to pass in a non-zero offset *and* use the conversions file, the method Editor.update_conversions(*conversions_file*) can be used to store the contents of the conversions file after the converter has been initialized.
 
 - cutoff: An integer, in seconds. Any caption that starts after the number of seconds specified by the cutoff has passed will not be included in the conversions.
+
+#### Editor class methods
+- edit_captions(): This implements the edits and conversions. New files of the specified filetypes that contain the specified edits will be written to the destination directory (or the current director if no destination directory was provided).
+
+- update_captions_path(*captions_file*): Stores the supplied Path object or the string of a path that points to the new initial captions file.
+
+- update_conversions(*conversions*): Stores the supplied Path object or the string of a path that points to the conversions JSON file.
+
+- update_dest_filename(*new_name*): Stores the supplied filename string. All files produced by running Editor.edit_captions() will have the given filename.
+
+- update_dest_directory(*new_directory*): Stores the supplied Path object or the string of a path that points to the new destination directory. All files produced by running Editor.edit_captions() will appear in the given directory.
+
+- update_cutoff(*new_cutoff*): Stores the supplied integer or float. If *new_cutoff* is greater than zero, any new caption files that would be produced by running Editor.edit_captions() will be cut off after the number of seconds equal to *new_cutoff*.
+
+### Using the Editor class
+
+```python
+from captioneditor import Editor
+import os
+
+editor = Editor(
+    captions_file="my_captions.vtt",
+    conversions_file="data/conversions.json",
+    dest_filename="my-new-captions",
+    dest_file_extensions=[".dfxp", ".srt", ".ttml", ".vtt"],
+    dest_directory=Path(os.getcwd()) / "new-captions",
+)
+
+editor.edit_captions()
+
+```
 
 #### Setting up the conversions JSON file
 The conversions file will contain the text conversions to be applied, as well as optional offset and cutoff values. If an offset value is not included, no offset will be applied. If a cutoff value is not included, no cutoff will be applied.
@@ -94,6 +124,4 @@ Note: if two elements contain the same key, but one is case-sensitive and the ot
 
 Note: if two elements contain the same key and case-sensitivity but have different replacement values, there is no guarantee as to which replacement will be the one that takes effect.
 
-
-### Using the command line
 

@@ -18,7 +18,7 @@ from pycaption import (
 SUPPORTED_FILE_TYPES = {".vtt", ".srt", ".ttml", ".dfxp"}
 
 
-class CaptionConverter:
+class Editor:
     READERS = {
         ".vtt": WebVTTReader(),
         ".srt": SRTReader(),
@@ -273,7 +273,7 @@ class CaptionConverter:
         else:
             raise FileNotFoundError("The destination directory does not exist.")
 
-    def convert_captions(self) -> None:
+    def edit_captions(self) -> None:
         """
         Reads captions from captions file, converts them based on offset, cutoff, and conversions file, and writes them to the destination file(s) in the destination directory.
         """
@@ -381,7 +381,6 @@ class CaptionConverter:
             dest_file_path = Path(
                 self._dest_directory / self._dest_filename
             ).with_suffix(extension)
-            print(dest_file_path)
             curr_contents = writer.write(new_caption_set)
 
             with open(dest_file_path, "w", encoding="utf8") as new_file:
@@ -446,7 +445,7 @@ def main(args=None) -> argparse.Namespace:
         if offset == 0:
             print("Offset must be nonzero.")
         else:
-            converter = CaptionConverter(
+            converter = Editor(
                 captions_file=args.caption_filename,
                 dest_filename=args.d,
                 dest_directory=args.dd,
@@ -454,9 +453,9 @@ def main(args=None) -> argparse.Namespace:
                 offset=offset,
                 cutoff=cutoff,
             )
-            converter.convert_captions()
+            converter.edit_captions()
     else:
-        converter = CaptionConverter(
+        converter = Editor(
             captions_file=args.caption_filename,
             conversions_file=args.c,
             dest_filename=args.d,
@@ -464,7 +463,7 @@ def main(args=None) -> argparse.Namespace:
             dest_file_extensions=args.dt,
             cutoff=cutoff,
         )
-        converter.convert_captions()
+        converter.edit_captions()
 
     return args
 

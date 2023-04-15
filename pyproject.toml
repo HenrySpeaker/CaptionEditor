@@ -4,11 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 dynamic = ["version"]
-name = "captionconverter"
+name = "captioneditor"
 authors = [
     {name = "Henry Speaker", email = "HenrySpeaker24@gmail.com"},
 ]
 readme = "README.md"
+requires-python = ">=3.10"
 description = "A tool to replace words and phrases in a caption file with new words or phrases, offset each caption by a specified amount, and cut off captions after a specified time."
 dependencies = [
     "coverage",
@@ -18,6 +19,11 @@ dependencies = [
     "webvtt-py",
     "pycaption",
     "xmldiff"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
 ]
 
 [tool.pytest.ini_options]
@@ -32,4 +38,4 @@ filterwarnings = [
 [tool.setuptools_scm]
 
 [project.scripts]
-convert-captions = "captionconverter.converter:main"
+edit-captions = "captioneditor.editor:main"

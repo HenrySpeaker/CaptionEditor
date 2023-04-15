@@ -1,6 +1,6 @@
 import pytest
-from src.captionconverter import CaptionConverter
-from src.captionconverter.converter import main
+from src.captioneditor import Editor
+from src.captioneditor.editor import main
 import webvtt
 from pathlib import Path
 from tests.test_utils import check_identical_contents
@@ -173,120 +173,120 @@ def all_conversion_types(conversions_file_start):
 
 def test_captions_not_found():
     with pytest.raises(FileNotFoundError) as exc_info:
-        converter = CaptionConverter("test.vtt", CONVERSIONS_FILE)
+        editor = Editor("test.vtt", CONVERSIONS_FILE)
     assert str(exc_info.value) == "Captions file not found"
 
 
 def test_captions_wrong_extension():
     with pytest.raises(FileNotFoundError) as exc_info:
-        converter = CaptionConverter(CONVERSIONS_FILE, CONVERSIONS_FILE)
+        editor = Editor(CONVERSIONS_FILE, CONVERSIONS_FILE)
     assert str(exc_info.value) == "Captions file not found"
 
 
 def test_conversions_not_found():
     with pytest.raises(FileNotFoundError) as exc_info:
-        converter = CaptionConverter(VTT_CAPTIONS, "wrong_conversions.json")
+        editor = Editor(VTT_CAPTIONS, "wrong_conversions.json")
     assert str(exc_info.value) == "Conversions file not found"
 
 
 def test_conversions_wrong_extension():
     with pytest.raises(FileNotFoundError) as exc_info:
-        converter = CaptionConverter(VTT_CAPTIONS, "test.txt")
+        editor = Editor(VTT_CAPTIONS, "test.txt")
     assert str(exc_info.value) == "Conversions file not found"
 
 
 def test_invalid_conversions_contents(extra_conversions_contents):
     with pytest.raises(ValueError) as exc_info:
-        converter = CaptionConverter(VTT_CAPTIONS, extra_conversions_contents)
+        editor = Editor(VTT_CAPTIONS, extra_conversions_contents)
     assert str(exc_info.value) == "Invalid conversions.json contents"
 
 
 def test_large_pos_offset(large_pos_offset_conversions, dest_file):
-    converter = CaptionConverter(
+    editor = Editor(
         CAPTIONS_FILE,
         large_pos_offset_conversions,
         dest_filename=dest_file["name"],
         dest_directory=dest_file["directory"],
     )
-    converter.convert_captions()
-    assert converter != None
+    editor.edit_captions()
+    assert editor != None
 
 
 def test_large_neg_offset(large_neg_offset_conversions, dest_file):
-    converter = CaptionConverter(
+    editor = Editor(
         CAPTIONS_FILE,
         large_neg_offset_conversions,
         dest_filename=dest_file["name"],
         dest_directory=dest_file["directory"],
     )
-    converter.convert_captions()
-    assert converter != None
+    editor.edit_captions()
+    assert editor != None
 
 
 def test_dest_filename_same_as_captions():
-    converter = CaptionConverter(
+    editor = Editor(
         CAPTIONS_FILE,
         CONVERSIONS_FILE,
         dest_filename=CAPTIONS_FILE_NAME,
         dest_directory=INITIAL_CAPTIONS_ROOT,
     )
-    assert converter._dest_filename == CAPTIONS_FILE_NAME + "-converted"
+    assert editor._dest_filename == CAPTIONS_FILE_NAME + "-converted"
 
 
 def test_dest_filename_same_as_captions_diff_directory():
-    converter = CaptionConverter(
+    editor = Editor(
         CAPTIONS_FILE,
         CONVERSIONS_FILE,
         dest_filename=CAPTIONS_FILE_NAME,
         dest_directory=TEMP_DEST_DIR,
     )
-    assert converter._dest_filename == CAPTIONS_FILE_NAME
+    assert editor._dest_filename == CAPTIONS_FILE_NAME
 
 
 def test_valid_captions_and_conversions_files():
-    converter = CaptionConverter(
+    editor = Editor(
         captions_file=CAPTIONS_FILE,
         conversions_file=CONVERSIONS_FILE,
     )
-    assert converter != None
+    assert editor != None
 
 
 def test_valid_captions_conversions_and_dest_files(dest_file):
-    converter = CaptionConverter(
+    editor = Editor(
         captions_file=CAPTIONS_FILE,
         conversions_file=CONVERSIONS_FILE,
         dest_filename=dest_file["name"],
         dest_directory=dest_file["directory"],
     )
-    assert converter != None
+    assert editor != None
 
 
 def test_string_offset(string_offset_conversions):
     with pytest.raises(ValueError) as exc_info:
-        converter = CaptionConverter(CAPTIONS_FILE, string_offset_conversions)
+        editor = Editor(CAPTIONS_FILE, string_offset_conversions)
     assert str(exc_info.value) == "Offset must be integer"
 
 
 def test_string_cutoff(string_cutoff_conversions):
     with pytest.raises(ValueError) as exc_info:
-        converter = CaptionConverter(CAPTIONS_FILE, string_cutoff_conversions)
+        editor = Editor(CAPTIONS_FILE, string_cutoff_conversions)
     assert str(exc_info.value) == "Cutoff must be integer"
 
 
 def test_dict_conversions(dict_conversions):
     with pytest.raises(ValueError) as exc_info:
-        converter = CaptionConverter(CAPTIONS_FILE, dict_conversions)
+        editor = Editor(CAPTIONS_FILE, dict_conversions)
     assert str(exc_info.value) == "Conversions must be list"
 
 
 def test_empty_captions(dest_file):
-    converter = CaptionConverter(
+    editor = Editor(
         captions_file=EMPTY_CAPTIONS_FILE,
         conversions_file=CONVERSIONS_FILE,
         dest_filename=dest_file["name"],
         dest_directory=dest_file["directory"],
     )
-    converter.convert_captions()
+    editor.edit_captions()
     assert not Path(dest_file["name"]).is_file()
 
 
@@ -337,14 +337,14 @@ def test_offset_zero_cli_arg(capsys):
 
 
 def test_cutoff(dest_file):
-    converter = CaptionConverter(
+    editor = Editor(
         CAPTIONS_FILE,
         CONVERSIONS_FILE,
         dest_filename=dest_file["name"],
         dest_directory=dest_file["directory"],
         cutoff=100,
     )
-    converter.convert_captions()
+    editor.edit_captions()
     assert (
         len(webvtt.read(Path(dest_file["directory"]) / (dest_file["name"] + ".vtt")))
         == 18
@@ -352,14 +352,14 @@ def test_cutoff(dest_file):
 
 
 def test_cutoff_in_conversions(pos_cutoff_conversions, dest_file):
-    converter = CaptionConverter(
+    editor = Editor(
         CAPTIONS_FILE,
         pos_cutoff_conversions,
         dest_filename=dest_file["name"],
         dest_directory=dest_file["directory"],
     )
-    converter.convert_captions()
-    assert converter.cutoff == 100
+    editor.edit_captions()
+    assert editor.cutoff == 100
     assert check_identical_contents(
         Path(dest_file["directory"]) / (dest_file["name"] + ".vtt"),
         "tests/test_data/converted_captions/cutoff.vtt",
@@ -368,52 +368,52 @@ def test_cutoff_in_conversions(pos_cutoff_conversions, dest_file):
 
 def test_multiple_extensions(test_files):
     captions, dest, root, reference, type = test_files.param
-    converter = CaptionConverter(
+    editor = Editor(
         captions_file=captions,
         conversions_file=CONVERSIONS_FILE,
         dest_filename=dest,
         dest_directory=root,
         dest_file_extensions=[type],
     )
-    converter.convert_captions()
+    editor.edit_captions()
     assert check_identical_contents(Path(root) / dest, reference)
 
 
 def test_all_conversion_types(all_conversion_types, dest_file):
-    converter = CaptionConverter(
+    editor = Editor(
         CAPTIONS_FILE,
         all_conversion_types,
         dest_filename=dest_file["name"],
         dest_directory=dest_file["directory"],
     )
-    assert converter != None
+    assert editor != None
 
 
 def test_update_invalid_directory():
-    converter = CaptionConverter(CAPTIONS_FILE, CONVERSIONS_FILE)
+    editor = Editor(CAPTIONS_FILE, CONVERSIONS_FILE)
     with pytest.raises(FileNotFoundError) as exc_info:
-        converter.update_dest_directory("NOT A DIRECTORY")
+        editor.update_dest_directory("NOT A DIRECTORY")
     assert str(exc_info.value) == "The destination directory does not exist."
 
 
 def test_dest_dir_as_path():
-    converter = CaptionConverter(
+    editor = Editor(
         CAPTIONS_FILE, CONVERSIONS_FILE, dest_directory=Path("tests/test_data")
     )
-    assert converter != None
+    assert editor != None
 
 
 def test_absolute_paths(dest_file):
     abs_captions_file = DIRECTORY_PARENT_PATH / CAPTIONS_FILE
     abs_conversions_file = DIRECTORY_PARENT_PATH / CONVERSIONS_FILE
     abs_dest_dir = DIRECTORY_PARENT_PATH / dest_file["directory"]
-    converter = CaptionConverter(
+    editor = Editor(
         captions_file=abs_captions_file,
         conversions_file=abs_conversions_file,
         dest_directory=abs_dest_dir,
         dest_filename=dest_file["name"],
     )
-    converter.convert_captions()
+    editor.edit_captions()
 
     assert check_identical_contents(
         abs_dest_dir / (dest_file["name"] + ".vtt"), CONVERTED_VTT
@@ -421,14 +421,14 @@ def test_absolute_paths(dest_file):
 
 
 def test_missing_offset_cutoff_in_conversions(no_offset_cutoff_conversions, dest_file):
-    converter = CaptionConverter(
+    editor = Editor(
         captions_file=VTT_CAPTIONS,
         conversions_file=no_offset_cutoff_conversions,
         dest_filename=dest_file["name"],
         dest_directory=dest_file["directory"],
     )
-    print(converter._conversions)
-    converter.convert_captions()
+    print(editor._conversions)
+    editor.edit_captions()
     assert check_identical_contents(
         Path(dest_file["directory"]) / (dest_file["name"] + ".vtt"), NO_OFFSET_CUTOFF
     )
