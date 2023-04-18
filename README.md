@@ -1,12 +1,26 @@
 # CaptionEditor
-
+![python version](https://img.shields.io/badge/python-3.10%2B-blue) ![license](https://img.shields.io/badge/license-MIT-green)
 ## Project Description
 CaptionEditor helps you modify the contents of the captions files and convert captions between common caption filetypes. You can replace words and phrases inside of caption text as well as modify the timing of captions. 
 
-The package uses [pycaption](https://pypi.org/project/pycaption/) to convert caption files to other caption filetypes, [webvtt-py](https://pypi.org/project/webvtt-py/) to parse the captions, and [flashtext2](https://pypi.org/project/flashtext2/) to replace the words and phrases with corrections in each caption.
+The package uses [pycaption](https://pypi.org/project/pycaption/) to convert caption files to other caption filetypes, [webvtt-py](https://pypi.org/project/webvtt-py/) to parse the captions for editing, and [flashtext2](https://pypi.org/project/flashtext2/) to replace the words and phrases with corrections in each caption.
 
 
 You are free to copy, modify, and distribute CaptionEditor with attribution under the terms of the MIT license.
+
+## Table of contents
+
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Usage](#usage)
+    - [Editor class](#the-editor-class)
+        - [Initializing the Editor class](#initializing-the-editor-class)
+        - [Editor class methods](#editor-class-methods)
+        - [Editor class example](#editor-class-example)
+    - [CaptionEditor command line instructions](#captioneditor-command-line-instructions)
+        - [Command line example](#command-line-example)
+    - [Setting up the conversions JSON file](#setting-up-the-conversions-json-file) 
+
 
 ## Prerequisites
 CaptionEditor requires [Python 3.10+](https://www.python.org/downloads/) and [pip](https://pip.pypa.io/en/stable/installation/).
@@ -23,6 +37,7 @@ The package contains one class: Editor.
 
 This class can be imported and used in a python file or conversions can be initiated from the command line.
 
+---
 
 ### The Editor class
 #### Initializing the Editor class
@@ -56,7 +71,7 @@ The Editor class accepts a number of parameters:
 
 - update_cutoff(*new_cutoff*): Stores the supplied integer or float. If *new_cutoff* is greater than zero, any new caption files that would be produced by running Editor.edit_captions() will be cut off after the number of seconds equal to *new_cutoff*.
 
-### Using the Editor class
+#### Editor class example
 
 ```python
 from captioneditor import Editor
@@ -74,8 +89,41 @@ editor.edit_captions()
 
 ```
 
-#### Setting up the conversions JSON file
-The conversions file will contain the text conversions to be applied, as well as optional offset and cutoff values. If an offset value is not included, no offset will be applied. If a cutoff value is not included, no cutoff will be applied.
+---
+
+### CaptionEditor command line instructions
+Format: 
+```bash
+edit-captions <captions file> 
+              [-c <conversions file>]
+              [-n <new file name>]
+              [-dd <destination directory>]
+              [-dt <file extension 1> <file extension 2> ...]
+              [-o <offset value>]
+              [-co <cutoff value>]
+```
+
+The command accepts one required positional argument: &lt;captions file&gt;
+
+There are a number of optional arguments:
+- -c or -conversions: The JSON conversions file that follows the [required format](#setting-up-the-conversions-json-file).
+- -n or -name: The name for the converted caption files.
+- -dd or -dest_dir: The path to the directory where the converted caption file should be written.
+- -dt or -dest_types: Any combination of valid file extensions representing the desired filetypes of the converted captions. The valid file extensions are: .dfxp, .srt, .ttml, .vtt.
+- -o or -offset: An offset integer (in ms) for the converter. A negative value will make each caption appear earlier by the specified number of milliseconds and a positive value will make them appear later. **NOTE:** If this is supplied, no conversions will be used from a .json file and only the offset will be applied.
+- -co or -cutoff: An integer (in seconds) that specifies the timestamp after which no more captions should occur. 
+
+#### Command line example
+```bash
+edit-captions my_captions.srt -c conversions2.json -n my_converted_captions -dd converted-captions -dt .srt .vtt .dfxp
+```
+
+---
+
+### Setting up the conversions JSON file
+The conversions file will contain the text conversions to be applied, as well as optional offset and cutoff values.
+
+A negative offset value will make each caption appear earlier by the specified number of milliseconds and a positive value will make them appear later. If an offset value is not included, no offset will be applied. If a cutoff value is not included, no cutoff will be applied.
 
 Note: A negative cutoff value will not cut off any captions, but a zero or positive cutoff value will cut off captions after the specified number of seconds.
 

@@ -59,7 +59,7 @@ class Editor:
         self._dest_filetypes = []
 
         if dest_file_extensions:
-            for extension in dest_file_extensions:
+            for extension in set(dest_file_extensions):
                 if extension in self.READERS:
                     self._dest_filetypes.append(extension)
         else:
@@ -69,7 +69,7 @@ class Editor:
 
         # Initialize everything that might be needed for caption conversions
         self.timing_offset = offset
-        self.cutoff: int = -1
+        self._cutoff: int = -1
         self._conversions: list = []
 
         self._case_sensitive_processor = KeywordProcessor(case_sensitive=True)
@@ -89,7 +89,7 @@ class Editor:
 
     def _store_conversions(self) -> None:
         """
-        Store conversions file data.
+        Stores conversions file data from conversions file in the editor.
         """
 
         # Gather conversions data from file
@@ -103,8 +103,7 @@ class Editor:
         ):
             raise ValueError("Invalid conversions.json contents")
 
-        # Set the offset and the list of conversions
-
+        # Set the offset, cutoff, and the list of conversions
         if "offset" in conversions_data:
             if not isinstance(conversions_data["offset"], int):
                 raise ValueError("Offset must be integer")
@@ -117,9 +116,9 @@ class Editor:
             if not isinstance(conversions_data["cutoff"], int):
                 raise ValueError("Cutoff must be integer")
             else:
-                self.cutoff = conversions_data["cutoff"]
+                self._cutoff = conversions_data["cutoff"]
         else:
-            self.cutoff = -1
+            self._cutoff = -1
 
         if not isinstance(conversions_data["conversions"], list):
             raise ValueError("Conversions must be list")
@@ -131,7 +130,7 @@ class Editor:
         Replaces any kewords in current caption and records any keys seen that would be relevant for the next caption.
         """
 
-        # First check for any captions that should be converted directly
+        # First, check for any captions that should be converted directly
         if caption_text in self._direct_conversions:
             return self._direct_conversions[caption_text]
 
@@ -156,29 +155,28 @@ class Editor:
         If there is no name or no appropriate name for the destination file, a name will be created based on the original file, with '-converted' appended to the filename's stem.
         """
 
-        # Add '-converted' to the end of the stem of the current caption file path so the converted captions are distinguished from the original
         original_name = self._captions_file_path.stem
         self._dest_filename = original_name + "-converted"
 
     def _build_keyword_processors(self) -> None:
         """
-        Uses the conversions data and creates keyword processors for case-sensitive, case-insensitive, and any other keys that are replaced based on previous captions.
+        Uses the stored conversions data and creates keyword processors for case-sensitive, case-insensitive, and any other keys that are replaced based on previous captions.
         """
 
-        # These processors look for simple matches and replace them
+        # Processors to look for simple matches to be replaced
         self._case_sensitive_processor = KeywordProcessor(case_sensitive=True)
         self._case_insensitive_processor = KeywordProcessor()
 
-        # This processor looks for matches in the current caption that will be used for conversions in the following caption
+        # Processor to look for matches in the current caption that will be used to key conversions in the following caption
         self._previous_caption_keys_processor = KeywordProcessor(case_sensitive=True)
 
-        # This stores any keys found from the previous captions processor so that they can be referenced when processing the following caption
+        # List to store any keys found from the previous captions processor so that they can be referenced when processing the following caption
         self._previous_caption_keys = []
 
-        # This stores the processors that are meant to process the following caption and are keyed to the matches that could be found in the previous caption
+        # Dict to store the processors that are meant to process the following caption and are keyed to the matches that could be found in the previous caption
         self._previous_captions_processors = {}
 
-        # This stores any conversions that are meant to process an entire caption that matches exactly and replace it with new contents
+        # Dict to store any conversions that are meant to process an entire caption that matches exactly and replace it with new contents
         self._direct_conversions = {}
 
         for conversion in self._conversions:
@@ -201,9 +199,10 @@ class Editor:
                     key, replacement
                 )
 
-            # These are the captions meant to be converted directly, without any partial replacement
+            # Captions meant to be converted directly, without any partial replacement
             elif "directConversion" in conversion and conversion["directConversion"]:
                 self._direct_conversions[conversion["key"]] = conversion["replacement"]
+
             else:
                 if "caseSensitive" in conversion and conversion["caseSensitive"]:
                     self._case_sensitive_processor.add_keyword(key, replacement)
@@ -214,11 +213,11 @@ class Editor:
         """
         Updates the time cutoff (in seconds) for captions to be written. Any captions, after the offset has been applied, that would occur after the cutoff will not be included.
         """
-        self.cutoff = new_cutoff
+        self._cutoff = new_cutoff
 
     def update_captions_path(self, captions_file: str | Path) -> None:
         """
-        Check if provided file string or path exists and is of a valid type, update the file path property. If it isn't, raise an error.
+        Check whether provided file string or path exists and is of a valid type, and if so update the file path property. If it isn't, raise an error.
         """
 
         self._captions_file_path = Path(captions_file)
@@ -231,7 +230,8 @@ class Editor:
 
     def update_conversions(self, conversions: str | Path) -> None:
         """
-        Accepts a string of the relative or absolute path to conversions file and checks if conversions file exists. If it does exist, its contents are processed and stored in the converter.
+        Accepts a string or Path object of the relative or absolute path to conversions file and checks if conversions file exists.
+        If it does exist, its contents are processed and stored in the converter and the keyword processors are built.
         """
 
         self.conversions_file_path = Path(conversions)
@@ -246,8 +246,8 @@ class Editor:
 
     def update_dest_filename(self, new_name: str = "") -> None:
         """
-        Check for supplied filename for output file and create one if necessary. If no filename,
-        or the same filename as the original captions file is supplied and the destination directory is the same, a new filename will be created.
+        Checks if a filename was supplied and create one if necessary. If no filename, or the same filename as the original captions file is supplied and the destination directory is the same,
+        a new filename will be created.
         """
 
         if new_name:
@@ -263,19 +263,20 @@ class Editor:
 
     def update_dest_directory(self, new_directory: Path | str = ""):
         """
-        Accepts a string of the path to the destination directory, verifies that the new destination directory exists, and sets the new destination directory.
+        Accepts a string or Path object of the path to the destination directory, verifies that the new destination directory exists, and sets the new destination directory.
         """
+
         test_path = Path(new_directory)
         if not new_directory:
             self._dest_directory = self._captions_file_path.parent
-        if test_path.is_dir():
+        elif test_path.is_dir():
             self._dest_directory = test_path
         else:
             raise FileNotFoundError("The destination directory does not exist.")
 
     def edit_captions(self) -> None:
         """
-        Reads captions from captions file, converts them based on offset, cutoff, and conversions file, and writes them to the destination file(s) in the destination directory.
+        Reads captions from captions file, converts them based on offset, cutoff, and conversions, and writes them to the destination file(s) in the destination directory.
         """
 
         timestamp_pattern = re.compile(r"((\d{2,}):)?(\d\d):(\d\d).(\d\d\d)")
@@ -311,7 +312,7 @@ class Editor:
                 minutes += 60
                 hours -= 1
 
-            # Since negative timestamps aren't valid in WebVTT, None is returned to signal that the current caption should not be included in the new file
+            # Since negative timestamps aren't valid/useful, None is returned to signal that the current caption should not be included in the new file
             if min(hours, minutes, seconds, milliseconds) < 0:
                 return (None, 0)
 
@@ -346,6 +347,7 @@ class Editor:
             vtt_captions_path = self._captions_file_path
 
         # Modify the captions from the VTT file
+        # TODO remove header
         new_file_contents = "WEBVTT - Converted from " + str(vtt_captions_path)
         caption_count = 0
 
@@ -359,7 +361,7 @@ class Editor:
             if not new_start:
                 continue
 
-            if self.cutoff >= 0 and seconds_after_start > self.cutoff:
+            if self._cutoff >= 0 and seconds_after_start > self._cutoff:
                 continue
 
             new_caption = "\n" * 2 + str(caption_count) + "\n"
@@ -406,14 +408,14 @@ def main(args=None) -> argparse.Namespace:
         help="the text file containing the conversion rules",
     )
     parser.add_argument(
-        "-d",
-        "-destination",
+        "-n",
+        "-name",
         help="optional destination filename, default is '<previous filename>-converted.vtt'",
     )
     parser.add_argument(
         "-o",
         "-offset",
-        help="Optional offset value (in ms) for the converter. If this is supplied, no conversions will be used from a .json file and only the offset will be applied.",
+        help="Optional offset value (in ms) for the caption timing. If this is supplied, no conversions will be used from a .json file and only the offset will be applied.",
         required=False,
     )
     parser.add_argument(
@@ -447,7 +449,7 @@ def main(args=None) -> argparse.Namespace:
         else:
             converter = Editor(
                 captions_file=args.caption_filename,
-                dest_filename=args.d,
+                dest_filename=args.n,
                 dest_directory=args.dd,
                 dest_file_extensions=args.dt,
                 offset=offset,
@@ -458,7 +460,7 @@ def main(args=None) -> argparse.Namespace:
         converter = Editor(
             captions_file=args.caption_filename,
             conversions_file=args.c,
-            dest_filename=args.d,
+            dest_filename=args.n,
             dest_directory=args.dd,
             dest_file_extensions=args.dt,
             cutoff=cutoff,

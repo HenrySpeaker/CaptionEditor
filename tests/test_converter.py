@@ -291,16 +291,16 @@ def test_empty_captions(dest_file):
 
 
 def test_valid_cli_arguments():
-    args = [CAPTIONS_FILE, "-c", CONVERSIONS_FILE, "-d", TEMP_DEST_FILE, "-co", "0"]
+    args = [CAPTIONS_FILE, "-c", CONVERSIONS_FILE, "-n", TEMP_DEST_FILE, "-co", "0"]
     args_out = main(args)
     assert args_out.caption_filename == CAPTIONS_FILE
     assert args_out.c == CONVERSIONS_FILE
-    assert args_out.d == TEMP_DEST_FILE
+    assert args_out.n == TEMP_DEST_FILE
 
 
 def test_missing_captions_cli_argument():
     with pytest.raises(SystemExit) as exit_info:
-        args = ["-c", CONVERSIONS_FILE, "-d", TEMP_DEST_FILE]
+        args = ["-c", CONVERSIONS_FILE, "-n", TEMP_DEST_FILE]
         args_out = main(args)
     assert exit_info.type == SystemExit
     assert exit_info.value.code == 2
@@ -311,7 +311,7 @@ def test_offset_cli_arg(dest_file):
         CAPTIONS_FILE,
         "-c",
         CONVERSIONS_FILE,
-        "-d",
+        "-n",
         dest_file["name"],
         "-dd",
         dest_file["directory"],
@@ -321,17 +321,17 @@ def test_offset_cli_arg(dest_file):
     args_out = main(args)
     assert args_out.caption_filename == CAPTIONS_FILE
     assert args_out.c == CONVERSIONS_FILE
-    assert args_out.d == dest_file["name"]
+    assert args_out.n == dest_file["name"]
     assert args_out.dd == dest_file["directory"]
     assert args_out.o == "10"
 
 
 def test_offset_zero_cli_arg(capsys):
-    args = [CAPTIONS_FILE, "-c", CONVERSIONS_FILE, "-d", TEMP_DEST_FILE, "-o", "0"]
+    args = [CAPTIONS_FILE, "-c", CONVERSIONS_FILE, "-n", TEMP_DEST_FILE, "-o", "0"]
     args_out = main(args)
     assert args_out.caption_filename == CAPTIONS_FILE
     assert args_out.c == CONVERSIONS_FILE
-    assert args_out.d == TEMP_DEST_FILE
+    assert args_out.n == TEMP_DEST_FILE
     captured = capsys.readouterr()
     assert captured.out == "Offset must be nonzero.\n"
 
@@ -359,7 +359,7 @@ def test_cutoff_in_conversions(pos_cutoff_conversions, dest_file):
         dest_directory=dest_file["directory"],
     )
     editor.edit_captions()
-    assert editor.cutoff == 100
+    assert editor._cutoff == 100
     assert check_identical_contents(
         Path(dest_file["directory"]) / (dest_file["name"] + ".vtt"),
         "tests/test_data/converted_captions/cutoff.vtt",
