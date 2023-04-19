@@ -37,7 +37,6 @@ The package contains one class: Editor.
 
 This class can be imported and used in a python file or conversions can be initiated from the command line.
 
----
 
 ### The Editor class
 #### Initializing the Editor class
@@ -79,14 +78,13 @@ import os
 
 editor = Editor(
     captions_file="my_captions.vtt",
-    conversions_file="data/conversions.json",
+    conversions_file="conversion/conversions2.json",
     dest_filename="my-new-captions",
     dest_file_extensions=[".dfxp", ".srt", ".ttml", ".vtt"],
     dest_directory=Path(os.getcwd()) / "new-captions",
 )
 
 editor.edit_captions()
-
 ```
 
 ---
