@@ -127,14 +127,14 @@ class Editor:
 
     def _process_caption_contents(self, caption_text: str = "") -> str:
         """
-        Replaces any kewords in current caption and records any keys seen that would be relevant for the next caption.
+        Replaces any keywords in current caption and records any keys seen that would be relevant for the next caption.
         """
 
         # First, check for any captions that should be converted directly
         if caption_text in self._direct_conversions:
             return self._direct_conversions[caption_text]
 
-        # Process caption through both the case-senstive and case-insentive processors
+        # Process caption through both the case-sensitive and case-insensitive processors
         caption_text = self._case_insensitive_processor.replace_keywords(caption_text)
         caption_text = self._case_sensitive_processor.replace_keywords(caption_text)
 
@@ -187,7 +187,7 @@ class Editor:
             key = conversion["key"]
             replacement = conversion["replacement"]
 
-            # First check if the current conversion is dependent on a match occuring in the preceding caption
+            # First check if the current conversion is dependent on a match occurring in the preceding caption
             if "previous" in conversion and conversion["previous"]:
                 self._previous_caption_keys_processor.add_keyword(
                     conversion["previous"]

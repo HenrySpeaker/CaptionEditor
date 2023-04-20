@@ -121,9 +121,9 @@ edit-captions my_captions.srt -c conversions2.json -n my_converted_captions -dd 
 ### Setting up the conversions JSON file
 The conversions file will contain the text conversions to be applied, as well as optional offset and cutoff values.
 
-A negative offset value will make each caption appear earlier by the specified number of milliseconds and a positive value will make them appear later. If an offset value is not included, no offset will be applied. If a cutoff value is not included, no cutoff will be applied.
+A negative offset value will make each caption appear earlier by the specified number of milliseconds and a positive value will make them appear later. If an offset value is not included, no offset will be applied. 
 
-Note: A negative cutoff value will not cut off any captions, but a zero or positive cutoff value will cut off captions after the specified number of seconds.
+A negative cutoff value will not cut off any captions, but a zero or positive cutoff value will cut off captions after the specified number of seconds. If a cutoff value is not included, no cutoff will be applied.
 
 The conversions file must be a JSON file. This is an example that demonstrates the structure:
 ```
@@ -163,7 +163,7 @@ Each element in the conversions array must contain the "key" and "replacement" p
 
 - "caseSensitive": This is an optional property that, if included, must be paired with a boolean. If the value associated with this property is true, then the "key" value must make a case-sensitive match inside of the current caption for the "key" value's text to be replaced.
 
-- "directConversion": This is an optional property that, if included, must be paired with a string. If an entire caption makes a case-sensitive match with the "directConversion" value, then the entire caption will be replaced with the "replacement" value. If this is included in an element, it will override the "key" and "caseSenstive" values.
+- "directConversion": This is an optional property that, if included, must be paired with a string. If an entire caption makes a case-sensitive match with the "directConversion" value, then the entire caption will be replaced with the "replacement" value. If this is included in an element, it will override the "key" and "caseSensitive" values.
 
 
 Note: if two elements contain the same key, but one is case-sensitive and the other is not, the case-sensitive replacement will supersede the case-insensitive replacement.
