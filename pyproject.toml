@@ -27,7 +27,7 @@ classifiers = [
 ]
 
 [project.urls]
-repository = "https://github.com/HenrySpeaker/CaptionEditor"
+Source = "https://github.com/HenrySpeaker/CaptionEditor"
 
 [tool.pytest.ini_options]
 addopts = [
