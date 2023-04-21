@@ -26,6 +26,9 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
+[project.urls]
+repository = "https://github.com/HenrySpeaker/CaptionEditor"
+
 [tool.pytest.ini_options]
 addopts = [
     "--import-mode=prepend",
